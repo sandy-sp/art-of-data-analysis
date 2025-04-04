@@ -1,6 +1,6 @@
 # Weather Data Visualization Project
 
-This project fetches weather forecast data from the Open-Meteo API and generates various visualizations, including temperature, wind speed, precipitation, wind direction, daily temperature range, and "feels like" temperature.
+This project fetches weather forecast data from the Open-Meteo API and generates various visualizations, including temperature, wind speed, precipitation, wind direction, daily temperature range, "feels like" temperature, and a combined temperature and humidity plot.
 
 ## Table of Contents
 
@@ -13,6 +13,7 @@ This project fetches weather forecast data from the Open-Meteo API and generates
     * [Hourly Wind Direction](#hourly-wind-direction)
     * [Daily Temperature Range](#daily-temperature-range)
     * [Hourly "Feels Like" Temperature](#hourly-feels-like-temperature)
+    * [Hourly Temperature and Humidity](#hourly-temperature-and-humidity)
 
 ## Installation
 
@@ -64,3 +65,9 @@ This plot shows the daily temperature range for Cleveland, OH over the next 7 da
 ![Hourly Feels Like Temperature](reports/visualizations/feels_like_temperature_plot.png)
 
 This plot shows the hourly "feels like" temperature forecast for Cleveland, OH, calculated from temperature and humidity. It represents how the temperature actually feels to people.
+
+### Hourly Temperature and Humidity
+
+![Hourly Temperature and Humidity](reports/visualizations/temperature_humidity_plot.png)
+
+This plot combines the hourly temperature and relative humidity on a single chart, using two different y-axes. The temperature is shown in Celsius (°C) and the humidity is shown as a percentage (%).
