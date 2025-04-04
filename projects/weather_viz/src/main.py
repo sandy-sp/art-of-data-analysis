@@ -4,7 +4,8 @@ from src.visualizations import temperature_plot
 from src.visualizations import wind_plot
 from src.visualizations import precipitation_plot
 from src.visualizations import wind_direction_plot
-from src.visualizations import daily_temperature_range_plot  # Import the new daily_temperature_range_plot module
+from src.visualizations import daily_temperature_range_plot
+from src.visualizations import humidity_plot  # Import the new humidity_plot module
 
 if __name__ == "__main__":
     # Define the location
@@ -36,6 +37,9 @@ if __name__ == "__main__":
 
         # Generate the daily temperature range plot
         daily_temperature_range_plot.plot_daily_temperature_range(daily_df)
+
+        # Generate the hourly humidity plot
+        humidity_plot.plot_humidity(hourly_df)
 
         print("All visualizations generated successfully!")
     else:
