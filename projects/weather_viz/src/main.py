@@ -6,7 +6,8 @@ from src.visualizations import precipitation_plot
 from src.visualizations import wind_direction_plot
 from src.visualizations import daily_temperature_range_plot
 from src.visualizations import humidity_plot
-from src.visualizations import feels_like_temperature_plot  # Import the new feels_like_temperature_plot module
+from src.visualizations import feels_like_temperature_plot
+from src.visualizations import temperature_humidity_plot  # Import the new temperature_humidity_plot module
 
 if __name__ == "__main__":
     # Define the location
@@ -42,8 +43,8 @@ if __name__ == "__main__":
         # Generate the hourly humidity plot
         humidity_plot.plot_humidity(hourly_df)
 
-        # Generate the hourly "feels like" temperature plot
-        feels_like_temperature_plot.plot_feels_like_temperature(hourly_df)
+        # Generate the combined temperature and humidity plot
+        temperature_humidity_plot.plot_temperature_and_humidity(hourly_df)
 
         print("All visualizations generated successfully!")
     else:
