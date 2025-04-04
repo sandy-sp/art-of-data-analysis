@@ -3,7 +3,8 @@ from src import data_processor
 from src.visualizations import temperature_plot
 from src.visualizations import wind_plot
 from src.visualizations import precipitation_plot
-from src.visualizations import wind_direction_plot  
+from src.visualizations import wind_direction_plot
+from src.visualizations import daily_temperature_range_plot  # Import the new daily_temperature_range_plot module
 
 if __name__ == "__main__":
     # Define the location
@@ -32,6 +33,9 @@ if __name__ == "__main__":
 
         # Generate the wind direction rose plot
         wind_direction_plot.plot_wind_direction_rose(hourly_df)
+
+        # Generate the daily temperature range plot
+        daily_temperature_range_plot.plot_daily_temperature_range(daily_df)
 
         print("All visualizations generated successfully!")
     else:
