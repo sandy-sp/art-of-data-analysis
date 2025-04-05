@@ -50,6 +50,9 @@ if __name__ == "__main__":
         # Generate the combined wind speed and direction plot
         wind_speed_direction_plot.plot_wind_speed_and_direction(hourly_df)
 
+        # Generate the hourly "feels like" temperature plot
+        feels_like_temperature_plot.plot_feels_like_temperature(hourly_df)
+
         print("All visualizations generated successfully!")
     else:
         print("Failed to fetch weather data. Please check the error messages.")
