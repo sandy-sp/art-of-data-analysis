@@ -1,6 +1,7 @@
-poetry.lock
+# Python cache files
 __pycache__/
 *.py[cod]
+*\$py.class
 *.pyo
 *.pyd
 *.egg-info/
@@ -8,3 +9,17 @@ __pycache__/
 *.whl
 *.mypy_cache/
 *.pytest_cache/
+
+# Configuration file (if storing API key directly - use env variables ideally)
+projects/holiday_viz/config.py
+poetry.lock
+
+
+# VS Code settings
+.vscode/
+
+
+# IDE files
+.idea/
+*.iml
+EOF
