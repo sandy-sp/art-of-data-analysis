@@ -1,5 +1,3 @@
-# app/core/data_handler.py
-
 import pandas as pd
 import logging
 from datetime import datetime
