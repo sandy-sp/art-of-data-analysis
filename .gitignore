@@ -22,4 +22,31 @@ poetry.lock
 # IDE files
 .idea/
 *.iml
-EOF
+
+# Virtual Environment
+venv/
+*/venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data / Cache (if storing locally)
+data/cache/
+*.csv
+*.json
+# Add other data files if needed
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
