@@ -1,0 +1,109 @@
+import geopandas as gpd
+import logging
+import os
+import streamlit as st # Import Streamlit for caching
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# --- Shapefile Loading (Cached) ---
+# Use st.cache_resource to load the large shapefile only once.
+@st.cache_resource(show_spinner=False)
+def load_world_shapefile(shapefile_path: str):
+    """Loads the world shapefile into a GeoDataFrame."""
+    if not os.path.exists(shapefile_path):
+        logging.error(f"Shapefile not found at path: {shapefile_path}")
+        st.error(f"Error: World boundaries shapefile not found at {shapefile_path}. Please download and place it correctly.")
+        return None
+    try:
+        logging.info(f"Loading shapefile from: {shapefile_path}")
+        world_gdf = gpd.read_file(shapefile_path)
+        # --- IMPORTANT: Identify the correct country name column ---
+        # Inspect the columns of your specific shapefile: print(world_gdf.columns)
+        # Common names are 'NAME', 'ADMIN', 'SOVEREIGNT', 'CNTRY_NAME' etc.
+        # Rename it to a consistent 'COUNTRY_NAME' column for easier use
+        # Adjust the original_name_column based on your shapefile!
+        original_name_column = 'ADMIN' # Example: Adjust this!
+        if original_name_column not in world_gdf.columns:
+             logging.error(f"Expected country name column '{original_name_column}' not found in shapefile.")
+             # Try to find a likely candidate
+             possible_cols = [col for col in world_gdf.columns if 'NAME' in col.upper() or 'ADMIN' in col.upper()]
+             if possible_cols:
+                 original_name_column = possible_cols[0]
+                 logging.warning(f"Using fallback column '{original_name_column}' for country names.")
+             else:
+                 st.error("Could not automatically determine the country name column in the shapefile.")
+                 return None
+
+        world_gdf['COUNTRY_NAME'] = world_gdf[original_name_column]
+        logging.info(f"Shapefile loaded successfully with {len(world_gdf)} countries.")
+        return world_gdf
+    except Exception as e:
+        logging.error(f"Failed to load or process shapefile {shapefile_path}: {e}", exc_info=True)
+        st.error(f"Error loading shapefile: {e}")
+        return None
+
+# --- Get Bounds Function ---
+def get_country_bounds(country_name: str, world_gdf: gpd.GeoDataFrame) -> list | None:
+    """
+    Finds the bounding box for a given country name in the loaded GeoDataFrame.
+
+    Args:
+        country_name (str): The name of the country to find.
+        world_gdf (gpd.GeoDataFrame): The pre-loaded world GeoDataFrame.
+
+    Returns:
+        list | None: Bounding box [min_lon, min_lat, max_lon, max_lat] or None if not found.
+    """
+    if world_gdf is None:
+        logging.error("World GeoDataFrame is not loaded.")
+        return None
+
+    try:
+        # Attempt to find the country - case-insensitive matching is safer
+        country_match = world_gdf[world_gdf['COUNTRY_NAME'].str.contains(country_name, case=False, na=False)]
+
+        if country_match.empty:
+            logging.warning(f"Country '{country_name}' not found in shapefile.")
+            return None
+        elif len(country_match) > 1:
+            logging.warning(f"Multiple matches found for '{country_name}'. Using the first one: {country_match['COUNTRY_NAME'].iloc[0]}")
+            country_geom = country_match.iloc[0].geometry
+        else:
+            country_geom = country_match.iloc[0].geometry
+
+        # Get the bounding box tuple (minx, miny, maxx, maxy)
+        bounds = country_geom.bounds
+
+        # Access tuple elements by integer index, not string key
+        bounds_list = [bounds[0], bounds[1], bounds[2], bounds[3]]
+        logging.info(f"Found bounds for '{country_name}': {bounds_list}")
+        return bounds_list
+
+    except Exception as e:
+        logging.error(f"Error finding bounds for country '{country_name}': {e}", exc_info=True)
+        return None
+
+# Example usage (for testing)
+if __name__ == '__main__':
+    # Replace with the actual path to your shapefile
+    shp_path = '../../data/shapefiles/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp'
+    print(f"Testing shapefile load from: {shp_path}")
+    world = load_world_shapefile(shp_path)
+    if world is not None:
+        print("Shapefile loaded.")
+        # Test finding a country
+        country = "Germany"
+        bounds = get_country_bounds(country, world)
+        if bounds:
+            print(f"Bounds for {country}: {bounds}")
+        else:
+            print(f"Could not find bounds for {country}")
+
+        country = "United States of America" # Name might differ in shapefile
+        bounds = get_country_bounds(country, world)
+        if bounds:
+            print(f"Bounds for {country}: {bounds}")
+        else:
+            print(f"Could not find bounds for {country}")
+    else:
+         print("Failed to load shapefile for testing.")
