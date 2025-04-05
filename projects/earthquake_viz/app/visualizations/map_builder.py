@@ -6,6 +6,7 @@ import math
 from datetime import datetime
 # Optional: Use branca for colormaps if desired, requires installation
 # import branca.colormap as cm
+from folium.plugins import MarkerCluster  # Import MarkerCluster plugin
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -88,8 +89,8 @@ def create_earthquake_map(geojson_data: dict, center_on_bounds: list = None):
     ).add_to(fmap)
 
 
-    # --- Add Earthquake Markers ---
-    fg_earthquakes = folium.FeatureGroup(name="Earthquakes")
+    # --- Add Earthquake Markers using MarkerCluster ---
+    marker_cluster = MarkerCluster(name="Earthquake Clusters").add_to(fmap)  # Create MarkerCluster layer
 
     for feature in features:
         try:
@@ -145,13 +146,10 @@ def create_earthquake_map(geojson_data: dict, center_on_bounds: list = None):
                 fill_color=get_color_by_depth(depth), # Fill color
                 fill_opacity=0.7
             )
-            marker.add_to(fg_earthquakes)
+            marker.add_to(marker_cluster)  # Add marker to MarkerCluster
 
         except Exception as e:
             logging.error(f"Error processing feature {feature.get('id')}: {e}", exc_info=True) # Log traceback
-
-    # Add the feature group to the map
-    fg_earthquakes.add_to(fmap)
 
     # Fit map to bounds if provided and valid
     if center_on_bounds and 'min_lat' in locals(): # Check if bounds were validly processed
@@ -184,5 +182,5 @@ def create_earthquake_map(geojson_data: dict, center_on_bounds: list = None):
     # Note: This requires Font Awesome icons, which Folium includes by default.
     fmap.get_root().html.add_child(folium.Element(legend_html))
 
-    logging.info("Map generation complete.")
+    logging.info("Map generation complete with marker clustering.")  # Updated log message
     return fmap
