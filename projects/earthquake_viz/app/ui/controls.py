@@ -1,17 +1,18 @@
 import streamlit as st
 from datetime import datetime, timedelta
-# from app.config import boundaries # No longer needed here
 
-def display_sidebar_controls():
+def display_sidebar_controls(country_list: list):  # Add country_list parameter
     """Displays Streamlit widgets in the sidebar for user input and returns selections."""
 
     st.sidebar.header("🔎 Filter Options")
 
-    # --- Geographic Input (Country Name Only) ---
+    # --- Geographic Input (Country Selection) ---
     st.sidebar.subheader("🌍 Location")
-    country_name_input = st.sidebar.text_input(
-        "Enter Country Name:",
-        help="Enter the English name of the country (e.g., Germany, Japan, Brazil)."
+    selected_country = st.sidebar.selectbox(
+        "Select Country:",
+        options=country_list,  # Use the list from the shapefile
+        index=None,  # Start with no selection
+        placeholder="Choose a country..."  # Show placeholder text
     )
 
     # --- Time Range Selection ---
@@ -33,8 +34,7 @@ def display_sidebar_controls():
 
     # Return all selections
     final_selections = {
-        # Scope is implicitly "Country" now
-        "country_name": country_name_input.strip() if country_name_input else None, # Pass stripped name or None
+        "country_name": selected_country,  # Use selected_country from selectbox
         "starttime": start_date_str,
         "endtime": end_date_str,
         "min_magnitude": min_magnitude,
