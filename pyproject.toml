@@ -10,7 +10,9 @@ requires-python = ">=3.12"
 dependencies = [
     "pandas (>=2.2.3,<3.0.0)",
     "requests (>=2.32.3,<3.0.0)",
-    "matplotlib (>=3.10.1,<4.0.0)"
+    "matplotlib (>=3.10.1,<4.0.0)",
+    "folium (>=0.19.5,<0.20.0)",
+    "streamlit (>=1.44.1,<2.0.0)"
 ]
 
 
