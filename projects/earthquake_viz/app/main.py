@@ -24,16 +24,16 @@ st.title("🌍 USGS Earthquake Data Visualizer")
 st.markdown("Enter a country name to explore recent earthquake data within its boundaries.")
 st.markdown("---")
 
-# Load shapefile
-with st.spinner("Loading world boundaries map..."):
-    world_gdf = geo_utils.load_world_shapefile(SHAPEFILE_PATH)
+# Load shapefile and country list
+with st.spinner("Loading world boundaries map and country list..."):
+    world_gdf, country_list = geo_utils.load_world_shapefile(SHAPEFILE_PATH)  # Adjusted call to unpack tuple
 
-if world_gdf is None:
-    st.error("Application cannot start because the world boundaries shapefile failed to load. Please check the path and file integrity.")
+if world_gdf is None or country_list is None:  # Check both parts
+    st.error("Application cannot start because the world boundaries data failed to load. Please check the path and file integrity.")
     st.stop()
 
 # Sidebar controls
-user_inputs = controls.display_sidebar_controls()
+user_inputs = controls.display_sidebar_controls(country_list)  # Pass country_list to controls function
 
 # Caching wrapper function
 @st.cache_data(ttl=900, show_spinner=False)
@@ -60,7 +60,7 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
 
     # Validate country input and get bounds
     if not country_name:
-        st.error("Please enter a country name in the sidebar.")
+        st.error("Please select a country from the dropdown list in the sidebar.")  # Updated error message
     else:
         logging.info(f"Attempting to find bounds for country: {country_name}")
         with st.spinner(f"Looking up boundaries for {country_name}..."):
@@ -71,7 +71,7 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
             logging.info(f"Using bounds for {country_name}: {bounding_box}")
             execute_fetch = True
         else:
-            st.error(f"Could not find boundaries for '{country_name}'. Please check the spelling or try a different name.")
+            st.error(f"Could not find boundaries for selected country '{country_name}'.")
 
     # Execute API call and visualization
     if execute_fetch:
@@ -119,5 +119,5 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
             st.error("❌ Failed to fetch data from the USGS API.")
 
 else:
-    st.info("Enter a country name in the sidebar and click 'Fetch and Visualize Data' to load earthquake information.")
+    st.info("Select a country in the sidebar and click 'Fetch and Visualize Data' to load earthquake information.")  # Updated message
     st.markdown("---")
