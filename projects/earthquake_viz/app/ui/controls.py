@@ -1,5 +1,3 @@
-# app/ui/controls.py
-
 import streamlit as st
 from datetime import datetime, timedelta
 from app.config import boundaries # Import predefined boundaries
@@ -12,6 +10,7 @@ def display_sidebar_controls():
     # --- Geographic Scope Selection ---
     # Use keys from the predefined bounding boxes + potentially 'City' later
     available_scopes = list(boundaries.PREDEFINED_BOUNDING_BOXES.keys())
+    available_scopes.append("Country (Enter Name)")  # Add new option
     # available_scopes.append("City (Predefined)") # Add this later if using predefined cities
     # available_scopes.append("City (Custom)") # Add this later if implementing geocoding
 
@@ -21,9 +20,17 @@ def display_sidebar_controls():
         index=0 # Default to 'Global'
     )
 
-    # --- Conditional Geographic Inputs (Placeholder for now) ---
+    # --- Conditional Geographic Inputs ---
     selected_location_params = {"scope": selected_scope}
-    if selected_scope != "Global":
+    country_name_input = None  # Initialize
+
+    if selected_scope == "Country (Enter Name)":  # Add text input for country name
+        country_name_input = st.sidebar.text_input(
+            "Enter Country Name:",
+            help="Enter the English name of the country (e.g., Germany, Japan, Brazil)."
+        )
+        selected_location_params["country_name"] = country_name_input
+    elif selected_scope != "Global":
         st.sidebar.info(f"Scope selected: {selected_scope}. Using predefined boundaries.")
         # Later, we could add dropdowns for specific countries/regions if needed,
         # or inputs for city name/radius.
@@ -71,11 +78,15 @@ def display_sidebar_controls():
         step=10
     )
 
-    return {
+    # Return all selections
+    final_selections = {
         "scope": selected_scope,
         "starttime": start_date_str,
         "endtime": end_date_str,
         "min_magnitude": min_magnitude,
         "limit": limit
-        # We will derive bounding_box or lat/lon/radius in main.py based on scope
     }
+    if country_name_input:  # Include country name if provided
+        final_selections["country_name"] = country_name_input
+
+    return final_selections
