@@ -4,5 +4,5 @@ requests>=2.25.0     # For making HTTP requests to the API
 pandas>=1.3.0       # For data manipulation (optional but very useful)
 folium>=0.12.0      # For creating interactive Leaflet maps
 streamlit>=1.10.0   # For building the interactive web application UI
-# geopy>=2.0.0        # Uncomment later if we implement city name geocoding
-# geopandas>=0.10.0   # Uncomment later if we use shapefiles for boundaries
+geopy>=2.0.0        # Uncomment later if we implement city name geocoding
+geopandas>=0.10.0   # Uncomment later if we use shapefiles for boundaries
