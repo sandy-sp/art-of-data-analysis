@@ -3,12 +3,14 @@
 import streamlit as st
 import logging # Import logging
 import json  # Import json for hashing complex dicts if needed
+import pandas as pd  # Import pandas
 
 # Local application imports
 from app.ui import controls
 from app.core import usgs_api
 from app.config import boundaries
 from app.visualizations import map_builder # Ensure this is uncommented
+from app.core import data_handler  # <--- IMPORT data_handler
 
 # Import Streamlit components for rendering HTML (like Folium maps)
 import streamlit.components.v1 as components
@@ -50,7 +52,7 @@ def cached_api_call(**params):
 # --- End Caching Wrapper ---
 
 # --- Main Area for Visualization ---
-st.subheader("📊 Visualization")
+st.subheader("📊 Visualization & Data")  # Update subheader slightly
 
 # Add a button in the sidebar to trigger the data fetching and visualization
 if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click to load data based on current filters"):
@@ -99,22 +101,40 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
         num_events = len(geojson_data['features'])
         st.success(f"✅ Found {num_events} earthquake events (Data from cache or API).")
 
-        # Display spinner while generating the potentially complex map
-        with st.spinner(f"🗺️ Generating map for {num_events} events... This may take a moment."):
+        # --- Map Generation ---
+        with st.spinner(f"🗺️ Generating map for {num_events} events..."):
              earthquake_map = map_builder.create_earthquake_map(
                  geojson_data,
-                 center_on_bounds=bounding_box # Pass bounds to help center/fit map
+                 center_on_bounds=bounding_box
              )
-
-        # If map generation was successful, display it
         if earthquake_map:
-            st.info("Displaying Interactive Map (Scroll to zoom, Click markers for details):")
-            # Render the Folium map using Streamlit components HTML rendering
-            map_html = earthquake_map._repr_html_() # Get HTML representation of the map
-            components.html(map_html, height=600, scrolling=False) # Adjust height as needed
+            st.info("Displaying Interactive Map:")
+            map_html = earthquake_map._repr_html_()
+            components.html(map_html, height=600, scrolling=False)
         else:
-             # Handle error if map creation failed despite having data
              st.error("❌ Failed to generate the map visualization.")
+
+        # --- Data Table Generation ---                       # <--- NEW SECTION START
+        st.markdown("---")  # Add a separator
+        st.subheader("📄 Data Table")
+        with st.spinner("Preparing data table..."):
+            df = data_handler.geojson_to_dataframe(geojson_data)
+
+        if df is not None and not df.empty:
+            st.dataframe(df, use_container_width=True)  # Display the dataframe
+            # Provide download button
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                 label="Download data as CSV",
+                 data=csv,
+                 file_name=f'earthquake_data_{user_inputs["starttime"]}_to_{user_inputs["endtime"]}.csv',
+                 mime='text/csv',
+             )
+        elif df is not None and df.empty:
+             st.info("No features found in data to display in table.")  # Should match map message
+        else:
+            st.warning("Could not process data into a table format.")
+        # --- NEW SECTION END ---
 
     elif geojson_data and 'features' in geojson_data and len(geojson_data['features']) == 0:
         # Handle case where API call was successful but returned no events
@@ -126,6 +146,10 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
             if empty_map:
                  map_html = empty_map._repr_html_()
                  components.html(map_html, height=500, scrolling=False)
+        st.subheader("📄 Data Table")
+        empty_df = data_handler.geojson_to_dataframe({"type": "FeatureCollection", "features": []})
+        if empty_df is not None:
+             st.dataframe(empty_df, use_container_width=True)
 
     else:
         # Handle case where the API call itself failed (fetch_earthquake_data returned None)
