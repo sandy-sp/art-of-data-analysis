@@ -1,5 +1,3 @@
-# app/visualizations/map_builder.py
-
 import folium
 import logging
 import math
