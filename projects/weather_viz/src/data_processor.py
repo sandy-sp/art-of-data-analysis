@@ -26,11 +26,13 @@ def process_weather_data(weather_data):
             if 'time' in hourly_df and 'windspeed_10m' in hourly_df:
                 hourly_df['avg_daily_windspeed_10m'] = hourly_df.groupby(hourly_df['time'].dt.date)['windspeed_10m'].transform('mean')
 
-
             # Calculate precipitation intensity (basic, you can expand on this)
             if 'precipitation' in hourly_df:
                 hourly_df['precipitation_intensity'] = hourly_df['precipitation'].diff().fillna(0)  # Simple difference as intensity
 
+            # Map weather codes to icons (you can customize this mapping)
+            if 'weathercode' in hourly_df:
+                hourly_df['weather_icon'] = hourly_df['weathercode'].map(_map_weather_code_to_icon)
 
         daily_df = None
         if daily_data:
@@ -58,6 +60,44 @@ def _calculate_wind_chill(temperature, wind_speed):
     wind_chill = temperature - 0.5 * (wind_speed - 10)
     return wind_chill
 
+def _map_weather_code_to_icon(weathercode):
+    """
+    Maps the weather code to a corresponding icon or text description.
+    You can customize this mapping based on your preferred icons or descriptions.
+    """
+    # Simple mapping for demonstration (customize as needed)
+    mapping = {
+        0: "☀️",  # Clear sky
+        1: "🌤️",  # Mainly clear
+        2: "⛅",  # Partly cloudy
+        3: "☁️",  # Cloudy
+        45: "🌫️", # Fog
+        48: "🌫️", # Depositing rime fog
+        51: "🌧️",  # Drizzle
+        53: "🌧️",  # Moderate drizzle
+        55: "🌧️",  # Dense drizzle
+        56: "❄️🌧️",  # Light freezing drizzle
+        57: "❄️🌧️",  # Dense freezing drizzle
+        61: "☔",  # Slight rain
+        63: "☔",  # Moderate rain
+        65: "☔",  # Heavy rain
+        66: "❄️☔",  # Light freezing rain
+        67: "❄️☔",  # Heavy freezing rain
+        71: "🌨️",  # Slight snow fall
+        73: "🌨️",  # Moderate snow fall
+        75: "🌨️",  # Heavy snow fall
+        77: "❄️",  # Snow grains
+        80: "🌦️",  # Slight rain showers
+        81: "🌦️",  # Moderate rain showers
+        82: "🌦️",  # Violent rain showers
+        85: "❄️",  # Snow showers slight
+        86: "❄️",  # Snow showers heavy
+        95: "⛈️",  # Thunderstorm: Slight or moderate
+        96: "⛈️",  # Thunderstorm with slight hail
+        99: "⛈️"   # Thunderstorm with heavy hail
+    }
+    return mapping.get(weathercode, "?")  # Default to "?" if code not found
+
 if __name__ == "__main__":
     # This is a sample JSON response (replace with actual API output for testing)
     sample_data = {
@@ -74,7 +114,8 @@ if __name__ == "__main__":
             "windspeed_10m": "km/h",
             "precipitation": "mm",
             "winddirection_10m": "degrees",
-            "relativehumidity_2m": "%"
+            "relativehumidity_2m": "%",
+            "weathercode": "wmo code"
         },
         "hourly": {
             "time": [
@@ -100,6 +141,10 @@ if __name__ == "__main__":
             "relativehumidity_2m": [
                 65,
                 70
+            ],
+            "weathercode": [
+                0,
+                3
             ]
         },
         "daily_units": {
