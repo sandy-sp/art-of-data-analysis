@@ -1,35 +1,32 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
-def plot_humidity(hourly_df, output_path="reports/visualizations/humidity_plot.png"):
+def plot_humidity(hourly_df):
     """
-    Generates a line plot of hourly relative humidity.
+    Returns a Plotly line plot of hourly relative humidity.
+    Suitable for use in Streamlit with st.plotly_chart().
     """
-    if hourly_df is not None and not hourly_df.empty:
-        plt.figure(figsize=(12, 6))
-
-        # Plot the hourly relative humidity
-        plt.plot(hourly_df['time'], hourly_df['relativehumidity_2m'], marker='o', linestyle='-', color='green')
-
-        # Add labels and title
-        plt.xlabel("Time (Hourly)")
-        plt.ylabel("Relative Humidity (%)")
-        plt.title("Hourly Relative Humidity Forecast")
-        plt.grid(True)
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-
-        plt.savefig(output_path)
-        plt.close()
-        print(f"Hourly humidity plot saved to: {output_path}")
+    if hourly_df is not None and not hourly_df.empty and 'relativehumidity_2m' in hourly_df:
+        fig = px.line(
+            hourly_df,
+            x='time',
+            y='relativehumidity_2m',
+            title="Hourly Relative Humidity Forecast",
+            labels={"time": "Time (Hourly)", "relativehumidity_2m": "Relative Humidity (%)"},
+        )
+        fig.update_traces(mode='lines+markers', line=dict(color='green'))
+        fig.update_layout(xaxis_tickangle=-45, template="plotly_white")
+        return fig
     else:
-        print("No hourly humidity data to plot.")
+        return None
 
+# Optional standalone test
 if __name__ == "__main__":
-    # Sample usage for testing
     data = {
         'time': pd.to_datetime(['2025-04-04T00:00', '2025-04-04T01:00', '2025-04-04T02:00']),
         'relativehumidity_2m': [60, 65, 70]
     }
     sample_hourly_df = pd.DataFrame(data)
-    plot_humidity(sample_hourly_df)
+    fig = plot_humidity(sample_hourly_df)
+    if fig:
+        fig.show()
