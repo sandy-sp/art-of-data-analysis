@@ -1,46 +1,66 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.graph_objects as go
 
-def plot_temperature_and_humidity(hourly_df, output_path="reports/visualizations/temperature_humidity_plot.png"):
+def plot_temperature_and_humidity(hourly_df):
     """
-    Generates a plot combining hourly temperature and relative humidity.
+    Returns a Plotly figure combining hourly temperature and relative humidity with dual y-axes.
+    Suitable for use in Streamlit with st.plotly_chart().
     """
-    if hourly_df is not None and not hourly_df.empty and 'temperature_2m' in hourly_df and 'relativehumidity_2m' in hourly_df:
-        fig, ax1 = plt.subplots(figsize=(12, 6))
+    if (
+        hourly_df is not None and not hourly_df.empty and
+        'temperature_2m' in hourly_df and 'relativehumidity_2m' in hourly_df
+    ):
+        fig = go.Figure()
 
-        # Plot temperature on the primary y-axis (left)
-        color = 'tab:red'
-        ax1.plot(hourly_df['time'], hourly_df['temperature_2m'], marker='o', linestyle='-', color=color, label='Temperature')
-        ax1.set_xlabel("Time (Hourly)")
-        ax1.set_ylabel("Temperature (°C)", color=color)
-        ax1.tick_params(axis='y', labelcolor=color)
+        # Add temperature trace
+        fig.add_trace(go.Scatter(
+            x=hourly_df['time'],
+            y=hourly_df['temperature_2m'],
+            name='Temperature (°C)',
+            mode='lines+markers',
+            yaxis='y1',
+            line=dict(color='red')
+        ))
 
-        # Create a second y-axis for humidity (right)
-        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-        color = 'tab:blue'
-        ax2.plot(hourly_df['time'], hourly_df['relativehumidity_2m'], marker='o', linestyle='--', color=color, label='Humidity')
-        ax2.set_ylabel("Relative Humidity (%)", color=color)  # we already handled the x-label with ax1
-        ax2.tick_params(axis='y', labelcolor=color)
+        # Add humidity trace on secondary y-axis
+        fig.add_trace(go.Scatter(
+            x=hourly_df['time'],
+            y=hourly_df['relativehumidity_2m'],
+            name='Humidity (%)',
+            mode='lines+markers',
+            yaxis='y2',
+            line=dict(color='blue', dash='dash')
+        ))
 
-        # Add a title and legend
-        plt.title("Hourly Temperature and Relative Humidity")
-        fig.tight_layout()  # otherwise the right y-label is slightly clipped
-        fig.legend(loc="upper left", bbox_to_anchor=(0.1, 0.95)) # Added legend
+        # Set up layout with dual y-axes
+        fig.update_layout(
+            title="Hourly Temperature and Relative Humidity",
+            xaxis=dict(title="Time (Hourly)", tickangle=-45),
+            yaxis=dict(title="Temperature (°C)", titlefont=dict(color="red"), tickfont=dict(color="red")),
+            yaxis2=dict(
+                title="Relative Humidity (%)",
+                overlaying='y',
+                side='right',
+                titlefont=dict(color="blue"),
+                tickfont=dict(color="blue")
+            ),
+            legend=dict(x=0.01, y=1.05, orientation='h'),
+            template="plotly_white",
+            margin=dict(t=60, b=40)
+        )
 
-        plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels
-
-        plt.savefig(output_path)
-        plt.close()
-        print(f"Temperature and humidity plot saved to: {output_path}")
+        return fig
     else:
-        print("Insufficient data to plot temperature and humidity.")
+        return None
 
+# Optional standalone test
 if __name__ == "__main__":
-    # Sample usage for testing
     data = {
         'time': pd.to_datetime(['2025-04-04T00:00', '2025-04-04T01:00', '2025-04-04T02:00']),
         'temperature_2m': [10, 12, 11],
         'relativehumidity_2m': [60, 65, 70]
     }
     sample_hourly_df = pd.DataFrame(data)
-    plot_temperature_and_humidity(sample_hourly_df)
+    fig = plot_temperature_and_humidity(sample_hourly_df)
+    if fig:
+        fig.show()
