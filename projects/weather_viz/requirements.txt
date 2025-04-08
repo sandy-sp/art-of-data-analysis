@@ -1,7 +1,7 @@
 requests
 pandas
-matplotlib
 streamlit
 plotly
 openpyxl
 pgeocode 
+kaleido
