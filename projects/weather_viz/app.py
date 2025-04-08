@@ -38,11 +38,16 @@ st.title("🌤️ Weather Forecast Visualizer")
 if st.button("🔄 Restart"):
     st.experimental_rerun()
 
+# Ensure session state is initialized
+if "form_submitted" not in st.session_state:
+    st.session_state["form_submitted"] = False
+
 with st.form(key="zip_form"):
     st.subheader("📍 Enter a U.S. ZIP Code")
     zip_code_input = st.text_input("ZIP Code", max_chars=5, placeholder="e.g., 44114")
     fetch_btn = st.form_submit_button("📥 Fetch & Visualize Weather")
 
+# Handle form submission
 if fetch_btn:
     if not zip_code_input.strip():
         st.warning("Please enter a ZIP code.")
@@ -67,6 +72,20 @@ if fetch_btn:
         st.stop()
 
     hourly_df, daily_df = data_processor.process_weather_data(data)
+
+    # Mark form as submitted
+    st.session_state["form_submitted"] = True
+    st.session_state["hourly_df"] = hourly_df
+    st.session_state["daily_df"] = daily_df
+    st.session_state["location_label"] = location_label
+    st.session_state["zip_code_input"] = zip_code_input
+
+# Only display download buttons if the form was submitted
+if st.session_state["form_submitted"]:
+    hourly_df = st.session_state["hourly_df"]
+    daily_df = st.session_state["daily_df"]
+    location_label = st.session_state["location_label"]
+    zip_code_input = st.session_state["zip_code_input"]
 
     if hourly_df is not None and not hourly_df.empty:
         # 📄 CSV + Excel
