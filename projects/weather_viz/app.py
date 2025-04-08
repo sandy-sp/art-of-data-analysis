@@ -34,6 +34,10 @@ def save_fig_as_png(fig):
 st.set_page_config(page_title="Weather Visualizer", layout="wide")
 st.title("🌤️ Weather Forecast Visualizer")
 
+# Add a "Restart" button at the top of the page
+if st.button("🔄 Restart"):
+    st.experimental_rerun()
+
 with st.form(key="zip_form"):
     st.subheader("📍 Enter a U.S. ZIP Code")
     zip_code_input = st.text_input("ZIP Code", max_chars=5, placeholder="e.g., 44114")
