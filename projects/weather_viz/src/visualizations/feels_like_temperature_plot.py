@@ -1,35 +1,32 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
-def plot_feels_like_temperature(hourly_df, output_path="reports/visualizations/feels_like_temperature_plot.png"):
+def plot_feels_like_temperature(hourly_df):
     """
-    Generates a line plot of hourly "feels like" temperature (heat index).
+    Returns a Plotly line plot of hourly "feels like" temperature (heat index).
+    Suitable for use in Streamlit with st.plotly_chart().
     """
     if hourly_df is not None and not hourly_df.empty and 'feels_like_temperature_2m' in hourly_df:
-        plt.figure(figsize=(12, 6))
-
-        # Plot the hourly "feels like" temperature
-        plt.plot(hourly_df['time'], hourly_df['feels_like_temperature_2m'], marker='o', linestyle='-', color='purple')
-
-        # Add labels and title
-        plt.xlabel("Time (Hourly)")
-        plt.ylabel("Feels Like Temperature (°C)")
-        plt.title("Hourly Feels Like Temperature Forecast")
-        plt.grid(True)
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-
-        plt.savefig(output_path)
-        plt.close()
-        print(f"Hourly 'feels like' temperature plot saved to: {output_path}")
+        fig = px.line(
+            hourly_df,
+            x='time',
+            y='feels_like_temperature_2m',
+            title="Hourly Feels Like Temperature Forecast",
+            labels={"time": "Time (Hourly)", "feels_like_temperature_2m": "Feels Like Temperature (°C)"},
+        )
+        fig.update_traces(mode='lines+markers', line=dict(color='purple'))
+        fig.update_layout(xaxis_tickangle=-45, template="plotly_white")
+        return fig
     else:
-        print("No 'feels like' temperature data to plot.")
+        return None
 
+# Optional standalone test
 if __name__ == "__main__":
-    # Sample usage for testing
     data = {
         'time': pd.to_datetime(['2025-04-04T00:00', '2025-04-04T01:00', '2025-04-04T02:00']),
         'feels_like_temperature_2m': [15, 17, 16]
     }
     sample_hourly_df = pd.DataFrame(data)
-    plot_feels_like_temperature(sample_hourly_df)
+    fig = plot_feels_like_temperature(sample_hourly_df)
+    if fig:
+        fig.show()
