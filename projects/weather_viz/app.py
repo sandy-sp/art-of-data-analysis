@@ -16,11 +16,10 @@ from src.visualizations import (
 st.set_page_config(page_title="Weather Visualizer", layout="wide")
 st.title("🌤️ Weather Forecast Visualizer")
 
-# Sidebar Inputs
-with st.sidebar:
-    st.header("Input")
-    city_name = st.text_input("Enter a city (e.g., Cleveland, OH)", "Cleveland, OH")
-    fetch_btn = st.button("📥 Fetch & Visualize Weather")
+with st.form(key="city_form"):
+    st.subheader("🔍 Enter a City to Visualize Weather")
+    city_name = st.text_input("City Name", value="Cleveland, OH")
+    fetch_btn = st.form_submit_button("📥 Fetch & Visualize Weather")
 
 # Function to geocode city name
 def get_coordinates(city):
