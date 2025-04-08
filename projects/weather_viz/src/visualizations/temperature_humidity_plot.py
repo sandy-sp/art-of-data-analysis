@@ -1,18 +1,21 @@
 import pandas as pd
 import plotly.graph_objects as go
+from .plot_utils import apply_common_layout  # ⬅️ Add this import
 
-def plot_temperature_and_humidity(hourly_df):
+def plot_temperature_and_humidity(hourly_df, location=None):
     """
     Returns a Plotly figure combining hourly temperature and relative humidity with dual y-axes.
     Suitable for use in Streamlit with st.plotly_chart().
     """
+    required_cols = ['time', 'temperature_2m', 'relativehumidity_2m']
     if (
-        hourly_df is not None and not hourly_df.empty and
-        'temperature_2m' in hourly_df and 'relativehumidity_2m' in hourly_df
+        hourly_df is not None and 
+        not hourly_df.empty and 
+        all(col in hourly_df.columns for col in required_cols)
     ):
         fig = go.Figure()
 
-        # Add temperature trace
+        # Temperature trace
         fig.add_trace(go.Scatter(
             x=hourly_df['time'],
             y=hourly_df['temperature_2m'],
@@ -22,7 +25,7 @@ def plot_temperature_and_humidity(hourly_df):
             line=dict(color='red')
         ))
 
-        # Add humidity trace on secondary y-axis
+        # Humidity trace
         fig.add_trace(go.Scatter(
             x=hourly_df['time'],
             y=hourly_df['relativehumidity_2m'],
@@ -32,9 +35,10 @@ def plot_temperature_and_humidity(hourly_df):
             line=dict(color='blue', dash='dash')
         ))
 
-        # Set up layout with dual y-axes
+        title = f"Hourly Temperature and Relative Humidity in {location}" if location else "Hourly Temperature and Relative Humidity"
+
         fig.update_layout(
-            title="Hourly Temperature and Relative Humidity",
+            title=title,
             xaxis=dict(title="Time (Hourly)", tickangle=-45),
             yaxis=dict(
                 title=dict(text="Temperature (°C)", font=dict(color="red")),
@@ -46,14 +50,11 @@ def plot_temperature_and_humidity(hourly_df):
                 overlaying='y',
                 side='right'
             ),
-            legend=dict(x=0.01, y=1.05, orientation='h'),
-            template="plotly_white",
-            margin=dict(t=60, b=40)
+            legend=dict(x=0.01, y=1.05, orientation='h')
         )
 
-        return fig
-    else:
-        return None
+        return apply_common_layout(fig, title)
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -63,6 +64,6 @@ if __name__ == "__main__":
         'relativehumidity_2m': [60, 65, 70]
     }
     sample_hourly_df = pd.DataFrame(data)
-    fig = plot_temperature_and_humidity(sample_hourly_df)
+    fig = plot_temperature_and_humidity(sample_hourly_df, location="Cleveland, OH")
     if fig:
         fig.show()
