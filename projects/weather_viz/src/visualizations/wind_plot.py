@@ -1,24 +1,29 @@
 import pandas as pd
 import plotly.express as px
+from .plot_utils import apply_common_layout 
 
-def plot_wind_speed(hourly_df):
+def plot_wind_speed(hourly_df, location=None):
     """
     Returns a Plotly line plot of hourly wind speed.
     Suitable for use in Streamlit with st.plotly_chart().
     """
-    if hourly_df is not None and not hourly_df.empty and 'windspeed_10m' in hourly_df:
+    required_cols = ['time', 'windspeed_10m']
+    if (
+        hourly_df is not None and 
+        not hourly_df.empty and 
+        all(col in hourly_df.columns for col in required_cols)
+    ):
         fig = px.line(
             hourly_df,
             x='time',
             y='windspeed_10m',
-            title="Hourly Wind Speed Forecast",
-            labels={"time": "Time (Hourly)", "windspeed_10m": "Wind Speed (km/h)"},
+            labels={"time": "Time (Hourly)", "windspeed_10m": "Wind Speed (km/h)"}
         )
         fig.update_traces(mode='lines+markers', line=dict(color='teal'))
-        fig.update_layout(xaxis_tickangle=-45, template="plotly_white")
-        return fig
-    else:
-        return None
+
+        title = f"Hourly Wind Speed Forecast for {location}" if location else "Hourly Wind Speed Forecast"
+        return apply_common_layout(fig, title)
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -27,6 +32,6 @@ if __name__ == "__main__":
         'windspeed_10m': [10, 15, 12]
     }
     sample_hourly_df = pd.DataFrame(data)
-    fig = plot_wind_speed(sample_hourly_df)
+    fig = plot_wind_speed(sample_hourly_df, location="Cleveland, OH")
     if fig:
         fig.show()
