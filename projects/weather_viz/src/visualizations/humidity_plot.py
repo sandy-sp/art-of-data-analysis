@@ -1,24 +1,29 @@
 import pandas as pd
 import plotly.express as px
+from .plot_utils import apply_common_layout  # ⬅️ Add this import
 
-def plot_humidity(hourly_df):
+def plot_humidity(hourly_df, location=None):
     """
     Returns a Plotly line plot of hourly relative humidity.
     Suitable for use in Streamlit with st.plotly_chart().
     """
-    if hourly_df is not None and not hourly_df.empty and 'relativehumidity_2m' in hourly_df:
+    required_cols = ['time', 'relativehumidity_2m']
+    if (
+        hourly_df is not None and 
+        not hourly_df.empty and 
+        all(col in hourly_df.columns for col in required_cols)
+    ):
         fig = px.line(
             hourly_df,
             x='time',
             y='relativehumidity_2m',
-            title="Hourly Relative Humidity Forecast",
-            labels={"time": "Time (Hourly)", "relativehumidity_2m": "Relative Humidity (%)"},
+            labels={"time": "Time (Hourly)", "relativehumidity_2m": "Relative Humidity (%)"}
         )
         fig.update_traces(mode='lines+markers', line=dict(color='green'))
-        fig.update_layout(xaxis_tickangle=-45, template="plotly_white")
-        return fig
-    else:
-        return None
+
+        title = f"Hourly Relative Humidity Forecast for {location}" if location else "Hourly Relative Humidity Forecast"
+        return apply_common_layout(fig, title)
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -27,6 +32,6 @@ if __name__ == "__main__":
         'relativehumidity_2m': [60, 65, 70]
     }
     sample_hourly_df = pd.DataFrame(data)
-    fig = plot_humidity(sample_hourly_df)
+    fig = plot_humidity(sample_hourly_df, location="Cleveland, OH")
     if fig:
         fig.show()
