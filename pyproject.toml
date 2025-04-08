@@ -19,8 +19,6 @@ dependencies = [
     "pycountry (>=24.6.1,<25.0.0)",
     "uszipcode (>=1.0.1,<2.0.0)",
     "openpyxl (>=3.1.5,<4.0.0)",
-    "sqlalchemy-mate (>=1.4.28.3,<3.0.0.0)",
-    "sqlalchemy (<2.0)",
     "pgeocode (>=0.5.0,<0.6.0)",
 ]
 
