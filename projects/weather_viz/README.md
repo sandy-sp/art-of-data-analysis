@@ -1,80 +1,109 @@
-# Weather Data Visualization Project
+# 🌦️ Weather Forecast Visualizer
 
-This project fetches weather forecast data from the Open-Meteo API and generates various visualizations, including temperature, wind speed, precipitation, wind direction, daily temperature range, "feels like" temperature, and combined plots for temperature & humidity and wind speed & direction.
+An interactive web app to visualize hourly and daily weather forecasts using the [Open-Meteo API](https://open-meteo.com/). Built with **Streamlit** and **Plotly**, this tool fetches real-time weather data based on city input and displays interactive visualizations for temperature, humidity, wind, and precipitation.
 
-## Table of Contents
+---
 
-1.  [Installation](#installation)
-2.  [Usage](#usage)
-3.  [Visualizations](#visualizations)
-    * [Hourly Temperature](#hourly-temperature)
-    * [Hourly Wind Speed](#hourly-wind-speed)
-    * [Hourly Precipitation](#hourly-precipitation)
-    * [Hourly Wind Direction](#hourly-wind-direction)
-    * [Daily Temperature Range](#daily-temperature-range)
-    * [Hourly "Feels Like" Temperature](#hourly-feels-like-temperature)
-    * [Hourly Temperature and Humidity](#hourly-temperature-and-humidity)
-    * [Hourly Wind Speed and Direction](#hourly-wind-speed-and-direction)
+## 📦 Features
 
-## Installation
+- City-based weather forecast lookup (via geolocation)
+- Interactive visualizations for:
+  - Hourly & daily temperature
+  - Feels-like temperature
+  - Humidity & precipitation
+  - Wind speed, direction, and vector field
+  - Combined temperature & humidity
+- Responsive layout for wide and narrow screens
 
-1.  Clone this repository (if applicable).
-2.  Navigate to the project directory: `cd weather_viz`
-3.  Install the required dependencies: `pip install -r requirements.txt`
+---
 
-## Usage
+## 🖥️ Live App Demo
 
-1.  Ensure you have an internet connection to fetch data from the API.
-2.  Run the main script to generate the visualizations: `python src/main.py`
-3.  The generated visualization images will be saved in the `reports/visualizations` directory.
-4.  You can view the visualizations below.
+> Coming soon! (You can deploy to [Streamlit Cloud](https://streamlit.io/cloud) or use Docker.)
 
-## Visualizations
+---
 
-###   Hourly Temperature
+## 🚀 Getting Started
 
-![Hourly Temperature](reports/visualizations/hourly_temperature.png)
+### 1. Clone the Repository
 
-This plot shows the hourly temperature forecast for Cleveland, OH over the next 7 days. The y-axis represents the temperature in Celsius (°C), and the x-axis represents the time in hourly intervals.
+```bash
+git clone https://github.com/sandy-sp/art_of_data_analysis_projects_weather_viz.git
+cd art_of_data_analysis_projects_weather_viz/projects/weather_viz
+```
 
-###   Hourly Wind Speed
+### 2. Install Requirements
 
-![Hourly Wind Speed](reports/visualizations/wind_plot.png)
+Make sure Python 3.8+ is installed.
 
-This plot shows the hourly wind speed forecast for Cleveland, OH over the next 7 days. The y-axis represents the wind speed in kilometers per hour (km/h), and the x-axis represents the time in hourly intervals.
+```bash
+pip install -r requirements.txt
+```
 
-###   Hourly Precipitation
+> `requirements.txt` should include:  
+> `streamlit`, `pandas`, `plotly`, `geopy`, `requests`
 
-![Hourly Precipitation](reports/visualizations/precipitation_plot.png)
+### 3. Run the App
 
-This plot shows the hourly precipitation forecast for Cleveland, OH over the next 7 days. The y-axis represents the precipitation in millimeters (mm), and the x-axis represents the time in hourly intervals. The precipitation is visualized using a bar chart.
+```bash
+streamlit run app.py
+```
 
-###   Hourly Wind Direction
+Open your browser at `http://localhost:8501`
 
-![Hourly Wind Direction](reports/visualizations/wind_direction_rose.png)
+---
 
-This plot shows the distribution of hourly wind directions for Cleveland, OH using a wind rose. The plot indicates the frequency of winds blowing from different directions.
+## 🧠 How It Works
 
-###   Daily Temperature Range
+- Uses `geopy` to convert city name → latitude & longitude
+- Queries Open-Meteo API for hourly and daily data
+- Processes it into `pandas` DataFrames
+- Plots data interactively with Plotly
+- Displays all visuals in a clean, responsive Streamlit UI
 
-![Daily Temperature Range](reports/visualizations/daily_temperature_range_plot.png)
+---
 
-This plot shows the daily temperature range for Cleveland, OH over the next 7 days, with separate lines for the maximum and minimum temperatures.
+## 📁 Project Structure
 
-###   Hourly "Feels Like" Temperature
+```
+weather_viz/
+├── app.py                      # Streamlit app entry point
+├── requirements.txt
+├── src/
+│   ├── api_handler.py          # Fetches weather data from API
+│   ├── data_processor.py       # Cleans and enriches raw API data
+│   └── visualizations/         # All interactive Plotly visualizations
+└── reports/
+    └── visualizations/         # (Not used in Streamlit mode)
+```
 
-![Hourly Feels Like Temperature](reports/visualizations/feels_like_temperature_plot.png)
+---
 
-This plot shows the hourly "feels like" temperature forecast for Cleveland, OH, calculated from temperature and humidity. It represents how the temperature actually feels to people.
+## 📸 Sample Visualizations
 
-###   Hourly Temperature and Humidity
+> Include screenshots here once the app is running:
+- Hourly Temperature Line Chart
+- Wind Direction Rose
+- Wind Speed Vectors
 
-![Hourly Temperature and Humidity](reports/visualizations/temperature_humidity_plot.png)
+---
 
-This plot combines the hourly temperature and relative humidity on a single chart, using two different y-axes. The temperature is shown in Celsius (°C) and the humidity is shown as a percentage (%).
+## 📤 Deployment (Optional)
 
-###   Hourly Wind Speed and Direction
+You can deploy this app via:
+- [Streamlit Cloud](https://streamlit.io/cloud)
+- [Render](https://render.com)
+- Docker + Cloud VM
 
-![Hourly Wind Speed and Direction](reports/visualizations/wind_speed_direction_plot.png)
+Let me know if you'd like a deploy guide!
 
-This plot combines hourly wind speed and direction using vectors (arrows) to indicate both magnitude and direction of the wind.
+---
+
+## 📝 License
+
+MIT License © Sandy
+
+```
+
+---
+
