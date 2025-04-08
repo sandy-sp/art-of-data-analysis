@@ -1,27 +1,29 @@
 import pandas as pd
 import plotly.express as px
+from .plot_utils import apply_common_layout  # ⬅️ Add this import
 
-def plot_precipitation(hourly_df):
+def plot_precipitation(hourly_df, location=None):
     """
     Returns a Plotly bar chart of hourly precipitation.
     Suitable for use in Streamlit with st.plotly_chart().
     """
-    if hourly_df is not None and not hourly_df.empty and 'precipitation' in hourly_df:
+    required_cols = ['time', 'precipitation']
+    if (
+        hourly_df is not None and 
+        not hourly_df.empty and 
+        all(col in hourly_df.columns for col in required_cols)
+    ):
         fig = px.bar(
             hourly_df,
             x='time',
             y='precipitation',
-            title="Hourly Precipitation Forecast",
             labels={"time": "Time (Hourly)", "precipitation": "Precipitation (mm)"}
         )
-        fig.update_layout(
-            xaxis_tickangle=-45,
-            template="plotly_white",
-            bargap=0.1
-        )
-        return fig
-    else:
-        return None
+        fig.update_layout(bargap=0.1)
+
+        title = f"Hourly Precipitation Forecast for {location}" if location else "Hourly Precipitation Forecast"
+        return apply_common_layout(fig, title)
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -30,6 +32,6 @@ if __name__ == "__main__":
         'precipitation': [0.0, 1.5, 0.2]
     }
     sample_hourly_df = pd.DataFrame(data)
-    fig = plot_precipitation(sample_hourly_df)
+    fig = plot_precipitation(sample_hourly_df, location="Cleveland, OH")
     if fig:
         fig.show()
