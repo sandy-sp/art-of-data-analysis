@@ -1,15 +1,18 @@
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+from .plot_utils import apply_common_layout  # ⬅️ Add this import
 
-def plot_wind_speed_and_direction(hourly_df):
+def plot_wind_speed_and_direction(hourly_df, location=None):
     """
     Returns a Plotly figure with wind speed vectors (direction + magnitude).
     Suitable for use in Streamlit with st.plotly_chart().
     """
+    required_cols = ['time', 'windspeed_10m', 'winddirection_10m']
     if (
-        hourly_df is not None and not hourly_df.empty and
-        'windspeed_10m' in hourly_df and 'winddirection_10m' in hourly_df
+        hourly_df is not None and 
+        not hourly_df.empty and 
+        all(col in hourly_df.columns for col in required_cols)
     ):
         # Prepare time and vector components
         times = hourly_df['time']
@@ -17,21 +20,20 @@ def plot_wind_speed_and_direction(hourly_df):
         directions_deg = hourly_df['winddirection_10m']
         directions_rad = np.radians(directions_deg)
 
-        # Calculate wind vector components
+        # Vector components
         u = speeds * np.cos(directions_rad)
         v = speeds * np.sin(directions_rad)
 
-        # Normalize arrows for display (visual scale only)
+        # Normalize arrows
         scale = 0.1
         x_end = np.arange(len(times))
         y_base = np.zeros_like(x_end)
         x_tip = x_end + u * scale
         y_tip = y_base + v * scale
 
-        # Create scatter + annotations
         fig = go.Figure()
 
-        # Plot base markers
+        # Base points
         fig.add_trace(go.Scatter(
             x=x_end,
             y=y_base,
@@ -40,7 +42,7 @@ def plot_wind_speed_and_direction(hourly_df):
             name='Wind Origin'
         ))
 
-        # Add arrow annotations
+        # Arrow annotations
         for i in range(len(times)):
             fig.add_annotation(
                 ax=x_end[i], ay=y_base[i],
@@ -54,9 +56,11 @@ def plot_wind_speed_and_direction(hourly_df):
                 arrowcolor='green'
             )
 
-        # Configure layout
+        # Dynamic title
+        title = f"Hourly Wind Speed and Direction (Vector Field) for {location}" if location else "Hourly Wind Speed and Direction (Vector Field)"
+
         fig.update_layout(
-            title="Hourly Wind Speed and Direction (Vector Field)",
+            title=title,
             xaxis=dict(
                 tickmode='array',
                 tickvals=list(range(len(times))),
@@ -65,14 +69,11 @@ def plot_wind_speed_and_direction(hourly_df):
                 tickangle=-45
             ),
             yaxis=dict(title="Vector Magnitude (Scaled)", zeroline=True),
-            showlegend=False,
-            template="plotly_white",
-            margin=dict(t=60, b=40)
+            showlegend=False
         )
 
-        return fig
-    else:
-        return None
+        return apply_common_layout(fig, title)
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -82,6 +83,6 @@ if __name__ == "__main__":
         'winddirection_10m': [0, 90, 180]  # N, E, S
     }
     sample_hourly_df = pd.DataFrame(data)
-    fig = plot_wind_speed_and_direction(sample_hourly_df)
+    fig = plot_wind_speed_and_direction(sample_hourly_df, location="Cleveland, OH")
     if fig:
         fig.show()
