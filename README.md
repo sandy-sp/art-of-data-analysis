@@ -1,69 +1,110 @@
-# Art of Data Analysis
+# ☔️ Weather Forecast Visualizer
 
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-## Overview
-
-Welcome to "Art of Data Analysis," a collection of my data analysis projects showcasing the process of transforming raw data into meaningful insights and compelling stories. This repository serves as a portfolio of my work, demonstrating my skills in various stages of the data analysis pipeline, including data cleaning, exploration, visualization, statistical analysis, and potentially predictive modeling.
-
-Each project within this repository aims to highlight different aspects of data analysis and utilizes a variety of tools and techniques. Whether it's uncovering hidden patterns, visualizing trends, or drawing data-driven conclusions, the goal is to demonstrate a thoughtful and insightful approach to working with data.
-
-## Projects Included
-
-This repository contains the following data analysis projects:
-
-
-**For each project, you will typically find:**
-
-* **Jupyter Notebooks (.ipynb):** Containing the Python code (or other language) used for analysis, along with explanations and visualizations.
-* **Datasets (.csv, .xlsx, etc.):** The data files used for the analysis (if publicly available or included with appropriate permissions).
-* **README.md (within the project folder):** A more detailed explanation of the specific project's goals, methodology, findings, and any relevant context.
-* **Supporting Files (if any):** This might include configuration files, images, or other resources.
-
-## Skills Demonstrated
-
-Through the projects in this repository, I aim to demonstrate proficiency in:
-
-* **Data Cleaning and Preprocessing:** Handling missing values, outliers, and data transformations.
-* **Exploratory Data Analysis (EDA):** Uncovering patterns, trends, and relationships in data through visualization and summary statistics.
-* **Data Visualization:** Creating informative and visually appealing charts and graphs using libraries like Matplotlib, Seaborn, and potentially others.
-* **Statistical Analysis:** Applying statistical methods to draw inferences and test hypotheses.
-* **Programming Languages:** Primarily Python (with libraries like Pandas, NumPy, Scikit-learn).
-* **Database Querying:** Potentially using SQL for data retrieval and manipulation.
-* **Communication of Insights:** Clearly and effectively presenting findings and conclusions.
-
-## Getting Started
-
-To explore the projects in this repository:
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/sandy-sp/art-of-data-analysis.git
-    ```
-2.  **Navigate to the project folders:**
-    ```bash
-    cd art-of-data-analysis/[Project Folder Name]
-    ```
-3.  **Review the README.md file within each project folder** for specific details about that project.
-4.  **Open the Jupyter Notebooks (.ipynb files)** to walk through the code and analysis.
-
-**Note:** You may need to install certain libraries and dependencies to run the notebooks. These are usually listed within the project-specific README files or at the beginning of the notebooks. You can typically install them using pip:
-
-```bash
-pip install pandas numpy matplotlib seaborn scikit-learn  # Example - adjust as needed
-```
-
-## Contributions
-
-While this repository primarily showcases my personal projects, I am open to constructive feedback and suggestions. If you have any insights or ideas, feel free to open an issue.
-
-## Contact
-
-You can reach me at [**sandeep.paidipati@gmail.com**](mailto\:sandeep.paidipati@gmail.com) or connect with me on [**Linkedin**](https://www.linkedin.com/in/sandeep-paidipati/).
-
-## License
-
-This repository is licensed under the [MIT License](https://opensource.org/licenses/MIT). Feel free to use and adapt the code for your own learning and projects.
+[![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-orange?logo=streamlit)](https://streamlit.io/)
+[![Plotly](https://img.shields.io/badge/Visualization-Plotly-blue?logo=plotly)](https://plotly.com/python/)
+[![Pandas](https://img.shields.io/badge/Data-Pandas-yellow?logo=pandas)](https://pandas.pydata.org/)
+[![Open-Meteo](https://img.shields.io/badge/API-Open--Meteo-green)](https://open-meteo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-Thank you for visiting "Art of Data Analysis"! I hope you find the projects insightful and engaging.
+## 🌐 Overview
+
+The **Weather Forecast Visualizer** is a Streamlit-based web application that fetches and visualizes hourly and daily weather data for any ZIP code in the United States.
+It uses the free [Open-Meteo API](https://open-meteo.com/) for real-time forecasts and displays interactive visualizations using **Plotly**.
+
+---
+
+## 🔗 Features
+
+- ZIP code-based location lookup using `pgeocode`
+- Hourly and daily weather data via Open-Meteo API
+- Visualizations:
+  - Temperature, Feels-like Temperature
+  - Humidity and Precipitation
+  - Wind Speed, Direction, and Vector Field
+  - Combined Temperature & Humidity
+- Downloadable content:
+  - CSV and Excel for raw weather data
+  - PNG charts for all visualizations
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/sandy-sp/art-of-data-analysis.git
+cd art-of-data-analysis/projects/weather_viz
+```
+
+### 2. Install Requirements
+```bash
+pip install -r requirements.txt
+```
+
+Make sure you have the following libraries installed:
+- `streamlit`
+- `pandas`
+- `plotly`
+- `pgeocode`
+- `kaleido`
+- `openpyxl`
+
+### 3. Run the App
+```bash
+streamlit run app.py
+```
+Then open your browser at `http://localhost:8501`
+
+---
+
+## 📁 Project Structure
+
+```
+weather_viz/
+├── app.py                  # Main Streamlit app
+├── requirements.txt        # Required dependencies
+├── README.md               # Project overview and usage
+├── src/
+│   ├── api_handler.py      # Open-Meteo API integration
+│   ├── data_processor.py   # Data transformation logic
+│   └── visualizations/     # All plotly-based chart modules
+└── reports/
+    └── visualizations/     # PNG chart outputs (optional)
+```
+
+---
+
+## 📈 Visualizations Gallery
+
+> All plots are interactive and downloadable
+
+- Hourly Temperature Line Chart
+- Feels Like Temperature Plot
+- Humidity Over Time
+- Precipitation Bars
+- Wind Speed Line + Direction Rose
+- Wind Speed & Direction Vector Field
+- Combined Temperature and Humidity
+- Daily Max/Min Temperature Trend
+
+---
+
+## 🌐 Credits
+
+- Weather data provided by **[Open-Meteo](https://open-meteo.com/)** — a free and open weather API.
+- ZIP-to-Geo lookup powered by **[pgeocode](https://pypi.org/project/pgeocode/)**
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
+### 🙏 Thanks for using Weather Forecast Visualizer!
+
+If you find this tool useful, feel free to star the repository or share feedback.
+
