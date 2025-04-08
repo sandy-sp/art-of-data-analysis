@@ -22,6 +22,7 @@ with st.form(key="city_form"):
     fetch_btn = st.form_submit_button("📥 Fetch & Visualize Weather")
 
 # Function to geocode city name
+@st.cache_data
 def get_coordinates(city):
     try:
         geolocator = Nominatim(user_agent="weather_visualizer_app")
@@ -33,8 +34,12 @@ def get_coordinates(city):
 
 # Main logic
 if fetch_btn:
-    st.info("Fetching weather data...")
-    coords = get_coordinates(city_name)
+    if not city_name.strip():
+        st.warning("Please enter a valid city name.")
+        st.stop()
+
+    with st.spinner("Fetching weather data..."):
+        coords = get_coordinates(city_name)
 
     if not coords:
         st.warning("Could not find the city. Please try a more specific name.")
