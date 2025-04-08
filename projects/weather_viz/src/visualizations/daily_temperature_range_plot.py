@@ -1,15 +1,21 @@
 import pandas as pd
 import plotly.graph_objects as go
+from .plot_utils import apply_common_layout 
 
-def plot_daily_temperature_range(daily_df):
+def plot_daily_temperature_range(daily_df, location=None):
     """
     Returns a Plotly line plot showing daily max and min temperature.
     Suitable for use in Streamlit with st.plotly_chart().
     """
-    if daily_df is not None and not daily_df.empty:
+    required_cols = ['time', 'temperature_2m_max', 'temperature_2m_min']
+    if (
+        daily_df is not None and 
+        not daily_df.empty and 
+        all(col in daily_df.columns for col in required_cols)
+    ):
         fig = go.Figure()
 
-        # Add Max Temperature trace
+        # Max Temperature trace
         fig.add_trace(go.Scatter(
             x=daily_df['time'],
             y=daily_df['temperature_2m_max'],
@@ -18,7 +24,7 @@ def plot_daily_temperature_range(daily_df):
             line=dict(color='red')
         ))
 
-        # Add Min Temperature trace
+        # Min Temperature trace
         fig.add_trace(go.Scatter(
             x=daily_df['time'],
             y=daily_df['temperature_2m_min'],
@@ -27,20 +33,16 @@ def plot_daily_temperature_range(daily_df):
             line=dict(color='blue')
         ))
 
-        # Update layout
+        # Dynamic title
+        title = f"Daily Temperature Range Forecast for {location}" if location else "Daily Temperature Range Forecast"
         fig.update_layout(
-            title="Daily Temperature Range",
             xaxis_title="Date",
             yaxis_title="Temperature (°C)",
-            legend_title="Legend",
-            xaxis=dict(tickangle=-45),
-            template="plotly_white",
-            margin=dict(t=60, b=40)
+            legend_title="Legend"
         )
 
-        return fig
-    else:
-        return None
+        return apply_common_layout(fig, title)  # Reuse common layout
+    return None
 
 # Optional standalone test
 if __name__ == "__main__":
@@ -50,6 +52,6 @@ if __name__ == "__main__":
         'temperature_2m_min': [5, 7, 6]
     }
     sample_df = pd.DataFrame(data)
-    fig = plot_daily_temperature_range(sample_df)
+    fig = plot_daily_temperature_range(sample_df, location="Cleveland, OH")
     if fig:
         fig.show()
