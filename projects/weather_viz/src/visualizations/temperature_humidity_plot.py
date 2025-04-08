@@ -36,13 +36,15 @@ def plot_temperature_and_humidity(hourly_df):
         fig.update_layout(
             title="Hourly Temperature and Relative Humidity",
             xaxis=dict(title="Time (Hourly)", tickangle=-45),
-            yaxis=dict(title="Temperature (°C)", titlefont=dict(color="red"), tickfont=dict(color="red")),
+            yaxis=dict(
+                title=dict(text="Temperature (°C)", font=dict(color="red")),
+                tickfont=dict(color="red")
+            ),
             yaxis2=dict(
-                title="Relative Humidity (%)",
+                title=dict(text="Relative Humidity (%)", font=dict(color="blue")),
+                tickfont=dict(color="blue"),
                 overlaying='y',
-                side='right',
-                titlefont=dict(color="blue"),
-                tickfont=dict(color="blue")
+                side='right'
             ),
             legend=dict(x=0.01, y=1.05, orientation='h'),
             template="plotly_white",
