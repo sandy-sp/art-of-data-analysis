@@ -1,50 +1,61 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 
-def plot_wind_direction_rose(hourly_df, output_path="reports/visualizations/wind_direction_rose.png"):
+def plot_wind_direction_rose(hourly_df):
     """
-    Generates a wind rose plot from hourly wind direction and wind speed data.
+    Returns a Plotly wind rose (Barpolar) showing frequency of wind directions.
+    Suitable for use in Streamlit with st.plotly_chart().
     """
     if hourly_df is not None and not hourly_df.empty:
-        # Prepare data for the wind rose
-        wind_directions = hourly_df['winddirection_10m'].values
-        wind_speeds = hourly_df['windspeed_10m'].values
+        if 'winddirection_10m' not in hourly_df:
+            return None
 
-        # Define bins for wind directions (16 compass points)
-        bins = np.arange(-11.25, 360, 22.5)
-        counts = np.histogram(wind_directions, bins=bins)[0]
+        # Bin wind directions into compass sectors
+        directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+        bins = np.linspace(0, 360, len(directions)+1)
 
-        # Create the wind rose plot
-        plt.figure(figsize=(8, 8))
-        ax = plt.subplot(111, polar=True)
+        wind_dirs = hourly_df['winddirection_10m'].dropna().values
+        counts, _ = np.histogram(wind_dirs, bins=bins)
 
-        # Plotting the wind rose
-        theta = np.radians(bins[:-1])
-        width = np.radians(22.5)  # Width of each bin
-        bars = ax.bar(theta, counts, width=width, bottom=0.0)
+        fig = go.Figure(go.Barpolar(
+            r=counts,
+            theta=[(bins[i] + bins[i+1])/2 for i in range(len(directions))],
+            width=[22.5] * len(directions),
+            marker_color='rgba(0,123,255,0.7)',
+            marker_line_color='black',
+            marker_line_width=1,
+            opacity=0.8,
+        ))
 
-        # Customize the plot
-        ax.set_theta_zero_location("N")  # Set North as the starting point
-        ax.set_theta_direction(-1)  # Clockwise wind directions
-        ax.set_title("Hourly Wind Direction Rose")
+        fig.update_layout(
+            title="Hourly Wind Direction Rose",
+            polar=dict(
+                angularaxis=dict(
+                    direction="clockwise",
+                    rotation=90,
+                    tickmode="array",
+                    tickvals=np.arange(0, 360, 45),
+                    ticktext=['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+                )
+            ),
+            template="plotly_white",
+            margin=dict(t=60, b=40)
+        )
 
-        # Set the tick locations and labels explicitly
-        ax.set_xticks(np.arange(0, 360, 45))  # Set tick locations
-        ax.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'])  # Set tick labels
-
-        plt.savefig(output_path)
-        plt.close()
-        print(f"Wind direction rose plot saved to: {output_path}")
+        return fig
     else:
-        print("No wind direction data to plot.")
+        return None
 
+# Optional standalone test
 if __name__ == "__main__":
-    # Sample usage for testing
     data = {
         'time': pd.to_datetime(['2025-04-04T00:00', '2025-04-04T01:00', '2025-04-04T02:00', '2025-04-04T03:00']),
-        'winddirection_10m': [0, 90, 180, 270],  # N, E, S, W
+        'winddirection_10m': [0, 90, 180, 270],
         'windspeed_10m': [5, 10, 8, 12]
     }
     sample_hourly_df = pd.DataFrame(data)
-    plot_wind_direction_rose(sample_hourly_df)
+    fig = plot_wind_direction_rose(sample_hourly_df)
+    if fig:
+        fig.show()
