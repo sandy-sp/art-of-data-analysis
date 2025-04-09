@@ -19,6 +19,7 @@ from app.core import usgs_api
 # Import the functions, not the pre-loaded data constants
 from app.core.geo_utils import (
     load_world_shapefile,
+    load_geonames_iso_codes, # New function
     load_country_name_to_iso_mapping,
     load_admin1_data,
     load_geonames_cities,
@@ -40,24 +41,51 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # --- Load Data Function (with robust error handling) ---
 def load_initial_data():
-    """Loads all necessary geographic data after page config."""
+    """Loads geographic data, creates NE Name -> ISO map using shapefile codes."""
+    geo_data_dict = {
+        "world_gdf": None, "ne_country_list": None, "ne_name_to_iso_map": {},
+        "admin1_data": None, "cities_df": None
+    }
     try:
+        # 1. Load Shapefile (includes ISO_A2 column now)
         world_gdf, ne_country_list = load_world_shapefile()
         if world_gdf is None or ne_country_list is None:
-            logging.error("load_world_shapefile returned None. Cannot proceed.")
+            logging.error("load_world_shapefile failed. Cannot proceed.")
             return None
 
-        ne_name_to_iso_map = load_country_name_to_iso_mapping(world_gdf)
-        admin1_data = load_admin1_data()
-        cities_df = load_geonames_cities()
+        geo_data_dict["world_gdf"] = world_gdf
+        geo_data_dict["ne_country_list"] = ne_country_list
 
-        return {
-            "world_gdf": world_gdf,
-            "ne_country_list": ne_country_list,
-            "ne_name_to_iso_map": ne_name_to_iso_map,
-            "admin1_data": admin1_data,
-            "cities_df": cities_df
-        }
+        # 2. Load valid ISO codes from GeoNames
+        valid_geonames_iso_codes = load_geonames_iso_codes()
+        if not valid_geonames_iso_codes:
+            logging.warning("Failed to load valid ISO codes from GeoNames countryInfo.txt. ISO mapping might be incomplete.")
+
+        # 3. Create NE Name -> ISO Code map from Shapefile Data
+        ne_name_to_iso_map = {}
+        unvalidated_iso_codes = []
+        if 'ISO_A2' in world_gdf.columns:
+            ne_name_to_iso_map = dict(zip(world_gdf['NE_COUNTRY_NAME'], world_gdf['ISO_A2']))
+            logging.info(f"Created initial Name -> ISO map with {len(ne_name_to_iso_map)} entries from shapefile.")
+
+            for ne_name, iso_code in ne_name_to_iso_map.items():
+                if iso_code not in valid_geonames_iso_codes and iso_code != '-99':
+                    unvalidated_iso_codes.append(f"{ne_name} ({iso_code})")
+            if unvalidated_iso_codes:
+                logging.warning(f"Shapefile ISO codes not found in GeoNames countryInfo.txt for: {unvalidated_iso_codes[:10]}")
+        else:
+            logging.error("ISO_A2 column not found in loaded world_gdf. Cannot create Name -> ISO map.")
+            st.error("Application Error: ISO_A2 code column missing from shapefile, cannot proceed with filtering.")
+            return None
+
+        geo_data_dict["ne_name_to_iso_map"] = ne_name_to_iso_map
+
+        # 4. Load Admin1 and City data
+        geo_data_dict["admin1_data"] = load_admin1_data()
+        geo_data_dict["cities_df"] = load_geonames_cities()
+
+        return geo_data_dict
+
     except Exception as e:
         st.error(f"An unexpected error occurred during initial data loading: {e}")
         logging.error("Unexpected error in load_initial_data sequence", exc_info=True)
@@ -128,70 +156,58 @@ fetch_button_pressed = st.sidebar.button(
 )
 
 if fetch_button_pressed:
-    api_params = {
-        "starttime": user_inputs["starttime"],
-        "endtime": user_inputs["endtime"],
-        "min_magnitude": user_inputs["min_magnitude"],
-        "limit": user_inputs["limit"],
-    }
-    map_center_bounds = None # For centering map view
-    fetch_location_description = "selected filters" # Default description
-    execute_fetch = False
+    # Retrieve necessary inputs
+    country_name = user_inputs.get("country_name")
+    state_name = user_inputs.get("state_name")
+    city_name = user_inputs.get("city_name")
+    radius_km = user_inputs.get("radius_km")
+    country_iso_code = user_inputs.get("country_iso_code")
+    admin1_code = user_inputs.get("admin1_code")
 
+    api_params = {
+        "starttime": user_inputs["starttime"], "endtime": user_inputs["endtime"],
+        "min_magnitude": user_inputs["min_magnitude"], "limit": user_inputs["limit"],
+    }
+    map_center_bounds = None
+    fetch_location_description = "selected filters"
+    execute_fetch = False
     selected_level = user_inputs["selected_level"]
 
-    # Determine API parameters based on the selected geographic level
-    if selected_level == "City" and user_inputs["city_name"] and user_inputs["radius_km"]:
-        fetch_location_description = f"city: {user_inputs['city_name']}"
-        # Pass the loaded cities_df to the lookup function
-        coords = get_city_coordinates(
-            user_inputs["country_iso_code"],
-            user_inputs["admin1_code"],
-            user_inputs["city_name"],
-            geo_data["cities_df"] # Pass loaded data
-        )
+    if selected_level == "City" and city_name and country_iso_code and admin1_code and radius_km:
+        fetch_location_description = f"city: {city_name}"
+        coords = get_city_coordinates(country_iso_code, admin1_code, city_name, geo_data["cities_df"])
         if coords:
-            api_params["latitude"] = coords[0]
-            api_params["longitude"] = coords[1]
-            api_params["max_radius_km"] = user_inputs["radius_km"]
+            api_params["latitude"], api_params["longitude"] = coords
+            api_params["max_radius_km"] = radius_km
             map_center_bounds = [coords[1] - 1, coords[0] - 1, coords[1] + 1, coords[0] + 1]
             execute_fetch = True
-            logging.info(f"API Filter: City Radius Search ({fetch_location_description})")
         else:
-            st.error(f"Could not find coordinates for city: {user_inputs['city_name']}")
+            st.error(f"Could not find coordinates for city: {city_name}")
 
-    elif selected_level in ["State", "Country"] and user_inputs["country_name"]:
-        fetch_location_description = f"country: {user_inputs['country_name']}"
+    elif selected_level in ["State", "Country"] and country_name:
+        fetch_location_description = f"country: {country_name}"
         if selected_level == "State":
-             fetch_location_description = f"state: {user_inputs['state_name']}, {user_inputs['country_name']} (using country bounds)"
-             logging.info(f"API Filter: State selected, using Country Bounding Box for API call.")
-
-        with st.spinner(f"Looking up boundaries for {user_inputs['country_name']}..."):
-             # Pass the loaded world_gdf to the lookup function
-            bounds = get_country_bounds(user_inputs['country_name'], geo_data["world_gdf"]) # Pass loaded data
+            fetch_location_description = f"state: {state_name}, {country_name} (using country bounds)"
+        with st.spinner(f"Looking up boundaries for {country_name}..."):
+            bounds = get_country_bounds(country_name, geo_data["world_gdf"])
         if bounds:
             api_params["bounding_box"] = bounds
             map_center_bounds = bounds
             execute_fetch = True
-            logging.info(f"API Filter: Bounding Box Search ({fetch_location_description})")
         else:
-            st.error(f"Could not determine boundaries for country: {user_inputs['country_name']}")
+            st.error(f"Could not determine boundaries for country: {country_name}")
 
     elif selected_level == "Global":
-         fetch_location_description = "global"
-         st.info("No specific geographic filter selected. Fetching global data based on other filters.")
-         execute_fetch = True
-         logging.info(f"API Filter: Global Search")
-
+        fetch_location_description = "global"
+        execute_fetch = True
     else:
-         st.warning("Please select a geographic filter (at least Country) or run a global search.")
+        st.warning("Please select a geographic filter or run a global search.")
 
-
-    # --- Execute API Call and Display Results ---
+    # Execute API Call and Display Results
     if execute_fetch:
         geojson_data = None
         try:
-            with st.spinner(f"📡 Checking cache or fetching data for {fetch_location_description}..."):
+            with st.spinner(f"📡 Fetching data for {fetch_location_description}..."):
                 geojson_data = cached_api_call(**api_params)
         except Exception as e:
             st.error(f"An error occurred during data fetching: {e}")
