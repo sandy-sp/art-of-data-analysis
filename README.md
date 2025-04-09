@@ -1,110 +1,110 @@
-# ☔️ Weather Forecast Visualizer
+# Art of Data Analysis
 
-[![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-orange?logo=streamlit)](https://streamlit.io/)
-[![Plotly](https://img.shields.io/badge/Visualization-Plotly-blue?logo=plotly)](https://plotly.com/python/)
-[![Pandas](https://img.shields.io/badge/Data-Pandas-yellow?logo=pandas)](https://pandas.pydata.org/)
-[![Open-Meteo](https://img.shields.io/badge/API-Open--Meteo-green)](https://open-meteo.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+## Overview
 
-## 🌐 Overview
+Welcome to **Art of Data Analysis**, a curated portfolio of end-to-end data analysis projects. This repository showcases how raw data is transformed into actionable insights and compelling visual stories using Python, SQL, and modern data visualization tools. Each project demonstrates a specific skillset in the data analysis pipeline—from data ingestion to storytelling.
 
-The **Weather Forecast Visualizer** is a Streamlit-based web application that fetches and visualizes hourly and daily weather data for any ZIP code in the United States.
-It uses the free [Open-Meteo API](https://open-meteo.com/) for real-time forecasts and displays interactive visualizations using **Plotly**.
+Whether it's identifying patterns, making predictions, or building interactive dashboards, the focus is on clarity, efficiency, and insight.
 
 ---
 
-## 🔗 Features
+## Projects Included
 
-- ZIP code-based location lookup using `pgeocode`
-- Hourly and daily weather data via Open-Meteo API
-- Visualizations:
-  - Temperature, Feels-like Temperature
-  - Humidity and Precipitation
-  - Wind Speed, Direction, and Vector Field
-  - Combined Temperature & Humidity
-- Downloadable content:
-  - CSV and Excel for raw weather data
-  - PNG charts for all visualizations
+### 1. ✨ Weather Forecast Visualizer ([Live App](https://art-of-data-analysis-weather-viz.streamlit.app/))
+An interactive **Streamlit** dashboard that fetches and visualizes hourly/daily weather forecasts using the [Open-Meteo API](https://open-meteo.com/). Features include:
 
----
+- Forecast by ZIP code (U.S.) with location validation
+- Interactive Plotly charts for temperature, humidity, wind & precipitation
+- Combined temperature & humidity analysis
+- CSV/Excel export of forecast data
 
-## 🚀 Getting Started
+**Stack**: Streamlit, Plotly, Pandas, Requests, Openpyxl, Pgeocode
 
-### 1. Clone the Repository
+**Run Locally**:
 ```bash
-git clone https://github.com/sandy-sp/art-of-data-analysis.git
-cd art-of-data-analysis/projects/weather_viz
-```
-
-### 2. Install Requirements
-```bash
+git clone https://github.com/sandy-sp/art_of_data_analysis_projects_weather_viz.git
+cd art_of_data_analysis_projects_weather_viz/projects/weather_viz
 pip install -r requirements.txt
-```
-
-Make sure you have the following libraries installed:
-- `streamlit`
-- `pandas`
-- `plotly`
-- `pgeocode`
-- `kaleido`
-- `openpyxl`
-
-### 3. Run the App
-```bash
 streamlit run app.py
 ```
-Then open your browser at `http://localhost:8501`
 
 ---
 
-## 📁 Project Structure
+### 2. 🌍 USGS Earthquake Visualizer
+A geographic data app that uses the **USGS Earthquake API** to map recent earthquakes within country borders. Key features:
 
+- Country-specific filtering using GeoPandas + Natural Earth shapefiles
+- Interactive Folium map with:
+  - Magnitude-based marker size
+  - Depth-based marker color (legend included)
+  - Marker clustering for performance
+- Advanced filtering: magnitude, date, record limits
+- CSV export of filtered dataset
+- Streamlit sidebar UI with caching optimizations
+
+**Stack**: Python 3.9+, Streamlit, GeoPandas, Folium, Requests, Pandas
+
+**Run Locally**:
+```bash
+git clone <your-repository-url>
+cd earthquake-visualizer
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+streamlit run app/main.py
 ```
-weather_viz/
-├── app.py                  # Main Streamlit app
-├── requirements.txt        # Required dependencies
-├── README.md               # Project overview and usage
-├── src/
-│   ├── api_handler.py      # Open-Meteo API integration
-│   ├── data_processor.py   # Data transformation logic
-│   └── visualizations/     # All plotly-based chart modules
-└── reports/
-    └── visualizations/     # PNG chart outputs (optional)
+
+Refer to the project README for shapefile download and setup instructions.
+
+---
+
+## Skills Demonstrated
+
+- **Data Wrangling & Cleaning**: Handling missing values, transformation, reshaping
+- **EDA & Visualization**: Seaborn, Matplotlib, Plotly, Geo-based mapping (Folium)
+- **Statistical Reasoning**: Applying inference techniques where relevant
+- **APIs & Data Fetching**: Requests, real-time data ingestion
+- **Streamlit UI Development**: Custom interactive dashboards
+- **Geospatial Data**: Shapefile parsing, map generation, spatial joins
+- **Excel Automation**: Using openpyxl for exports
+
+---
+
+## Getting Started
+
+### Clone This Repository:
+```bash
+git clone https://github.com/sandy-sp/art-of-data-analysis.git
 ```
 
----
+Explore each project individually from its folder. Each includes:
+- `README.md`: Project-specific setup and context
+- `*.ipynb` or `app.py`: Notebooks or Streamlit scripts
+- `/src/`: Modular scripts for data, visualization, APIs
+- Output assets or charts
 
-## 📈 Visualizations Gallery
-
-> All plots are interactive and downloadable
-
-- Hourly Temperature Line Chart
-- Feels Like Temperature Plot
-- Humidity Over Time
-- Precipitation Bars
-- Wind Speed Line + Direction Rose
-- Wind Speed & Direction Vector Field
-- Combined Temperature and Humidity
-- Daily Max/Min Temperature Trend
+You may need to install dependencies using `pip` or `conda`, depending on the project.
 
 ---
 
-## 🌐 Credits
-
-- Weather data provided by **[Open-Meteo](https://open-meteo.com/)** — a free and open weather API.
-- ZIP-to-Geo lookup powered by **[pgeocode](https://pypi.org/project/pgeocode/)**
+## Contributions
+This is a personal portfolio, but suggestions and constructive feedback are welcome. Open an issue or fork and submit a pull request.
 
 ---
 
-## 📄 License
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+## Contact
+- Email: [sandeep.paidipati@gmail.com](mailto:sandeep.paidipati@gmail.com)
+- LinkedIn: [https://www.linkedin.com/in/sandeep-paidipati/](https://www.linkedin.com/in/sandeep-paidipati/)
+- GitHub: [https://github.com/sandy-sp](https://github.com/sandy-sp)
 
 ---
 
-### 🙏 Thanks for using Weather Forecast Visualizer!
+## License
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT). Feel free to use, adapt, and learn from the code provided.
 
-If you find this tool useful, feel free to star the repository or share feedback.
+---
+
+Thanks for exploring the **Art of Data Analysis**!
 
