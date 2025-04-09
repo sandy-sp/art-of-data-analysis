@@ -1,6 +1,7 @@
 # app/ui/controls.py
 import streamlit as st
 from datetime import datetime, timedelta
+import pandas as pd # <-- ADD THIS IMPORT
 # Import only the lookup function types needed, not data loaders
 from app.core.geo_utils import (
     get_iso_code_for_country,
@@ -20,7 +21,8 @@ def display_sidebar_controls(geo_data: Dict[str, Any]):
     ne_country_list = geo_data.get("ne_country_list", [])
     ne_name_to_iso_map = geo_data.get("ne_name_to_iso_map", {})
     admin1_data = geo_data.get("admin1_data", {})
-    cities_df = geo_data.get("cities_df", pd.DataFrame()) # Get DataFrame or empty
+    # Use .get() with default - now pd is defined
+    cities_df = geo_data.get("cities_df", pd.DataFrame())
 
     # Initialize user_inputs dictionary (same as before)
     user_inputs = {
@@ -70,8 +72,12 @@ def display_sidebar_controls(geo_data: Dict[str, Any]):
                     logging.debug(f"Selected State: {selected_state}, Resolved Admin1 Code: {admin1_code}")
 
                     if admin1_code is not None:
-                        # Use the passed cities_df
-                        city_options = get_cities_for_admin1(iso_code, admin1_code, cities_df)
+                        # Use the passed cities_df (which might be empty, but is a DataFrame)
+                        # Pass the potentially empty but valid DataFrame 'cities_df'
+                        if not cities_df.empty: # Check if DataFrame has data before querying
+                             city_options = get_cities_for_admin1(iso_code, admin1_code, cities_df)
+                        # Else city_options remains []
+
                         if city_options:
                             selected_city = st.sidebar.selectbox(
                                 "Select City (Optional):",
@@ -88,6 +94,10 @@ def display_sidebar_controls(geo_data: Dict[str, Any]):
                                 )
                                 user_inputs["radius_km"] = radius_km
                                 logging.debug(f"Selected City: {selected_city}, Radius: {radius_km}km")
+                        # Only show caption if state selected but no cities found for it
+                        elif admin1_code is not None:
+                             st.sidebar.caption(f"No cities found for {selected_state}")
+
             else:
                  st.sidebar.caption(f"No state/province data found for {selected_country}")
         else:
@@ -95,8 +105,10 @@ def display_sidebar_controls(geo_data: Dict[str, Any]):
     else:
          st.sidebar.caption("Select a country to enable further filtering.")
 
+
     # --- Other Filters (remain the same) ---
     st.sidebar.subheader("⚙️ Other Filters")
+    # ... (rest of the date, magnitude, limit controls are unchanged) ...
     default_end = datetime.now().date()
     default_start = default_end - timedelta(days=30)
     start_date = st.sidebar.date_input("Start Date", default_start, max_value=default_end)
@@ -105,5 +117,6 @@ def display_sidebar_controls(geo_data: Dict[str, Any]):
     user_inputs["endtime"] = end_date.strftime("%Y-%m-%d")
     user_inputs["min_magnitude"] = st.sidebar.slider("Minimum Magnitude:", 0.0, 10.0, user_inputs["min_magnitude"], 0.1)
     user_inputs["limit"] = st.sidebar.number_input("Maximum Number of Events:", 10, 5000, user_inputs["limit"], 10)
+
 
     return user_inputs
