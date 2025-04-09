@@ -4,6 +4,7 @@
 [![Plotly](https://img.shields.io/badge/Charts-Plotly-3e4f6a?logo=plotly&logoColor=white)](https://plotly.com)
 [![Pandas](https://img.shields.io/badge/Data-Pandas-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Requests](https://img.shields.io/badge/API-Requests-20232a?logo=python&logoColor=white)](https://docs.python-requests.org)
+[![Open-Meteo](https://img.shields.io/badge/API-Open--Meteo-green)](https://open-meteo.com/)
 [![Geopy](https://img.shields.io/badge/Geo-Pgeocode-008080?logo=earth&logoColor=white)](https://pypi.org/project/pgeocode)
 [![Openpyxl](https://img.shields.io/badge/Excel-openpyxl-1a73e8?logo=microsoft-excel&logoColor=white)](https://pypi.org/project/openpyxl)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ed?logo=docker&logoColor=white)](https://www.docker.com)
