@@ -10,6 +10,7 @@ from app.config.boundaries import SHAPEFILE_PATH  # Import specific path
 from app.core import geo_utils
 from app.visualizations import map_builder
 from app.core import data_handler
+from app.visualizations import chart_builder
 
 # Import Streamlit components
 import streamlit.components.v1 as components
@@ -117,6 +118,21 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
 
         else:
             st.error("❌ Failed to fetch data from the USGS API.")
+        
+
+        st.subheader("📊 Earthquake Charts")
+
+        with st.spinner("Generating charts..."):
+            mag_fig = chart_builder.create_magnitude_histogram(df)
+            depth_fig = chart_builder.create_depth_histogram(df)
+            ts_fig = chart_builder.create_time_series(df)
+
+            if mag_fig:
+                st.pyplot(mag_fig)
+            if depth_fig:
+                st.pyplot(depth_fig)
+            if ts_fig:
+                st.pyplot(ts_fig)
 
 else:
     st.info("Select a country in the sidebar and click 'Fetch and Visualize Data' to load earthquake information.")  # Updated message
