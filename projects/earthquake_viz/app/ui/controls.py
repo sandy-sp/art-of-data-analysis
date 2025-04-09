@@ -47,6 +47,8 @@ def display_sidebar_controls(country_list: list):
                     index=None,
                     placeholder="Choose a state..."
                 )
+                st.sidebar.caption(f"[DEBUG] Country selected: {selected_country}")
+                st.sidebar.caption(f"[DEBUG] Resolved country code: {country_code}")
 
                 # Resolve admin1 code
                 if selected_state:
