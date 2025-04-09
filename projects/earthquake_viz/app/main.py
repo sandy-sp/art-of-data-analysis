@@ -6,10 +6,11 @@ import pandas as pd
 # Local application imports
 from app.ui import controls
 from app.core import usgs_api
-from app.config.boundaries import SHAPEFILE_PATH  # Import specific path
+from app.config.boundaries import SHAPEFILE_PATH 
 from app.core import geo_utils
 from app.visualizations import map_builder
 from app.core import data_handler
+from app.core.geo_utils import get_city_coordinates
 
 # Import Streamlit components
 import streamlit.components.v1 as components
@@ -34,6 +35,10 @@ if world_gdf is None or country_list is None:  # Check both parts
 
 # Sidebar controls
 user_inputs = controls.display_sidebar_controls(country_list)  # Pass country_list to controls function
+if user_inputs["city_name"]:
+    coords = get_city_coordinates("US", user_inputs["state_name"], user_inputs["city_name"])
+    if coords:
+        st.info(f"City center: {coords}, Radius: {user_inputs['radius_km']} km")
 
 # Caching wrapper function
 @st.cache_data(ttl=900, show_spinner=False)
