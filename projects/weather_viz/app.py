@@ -80,7 +80,7 @@ if fetch_btn:
     st.session_state["location_label"] = location_label
     st.session_state["zip_code_input"] = zip_code_input
 
-# Only display download buttons if the form was submitted
+# Only display visualizations if the form was submitted
 if st.session_state["form_submitted"]:
     hourly_df = st.session_state["hourly_df"]
     daily_df = st.session_state["daily_df"]
@@ -112,61 +112,34 @@ if st.session_state["form_submitted"]:
         )
 
         st.markdown("---")
-        st.subheader("🖼️ Download Charts (PNG)")
-
-        chart_figures = {
-            "Hourly Temperature": temperature_plot.plot_hourly_temperature(hourly_df, location=location_label),
-            "Feels Like Temperature": feels_like_temperature_plot.plot_feels_like_temperature(hourly_df, location=location_label),
-            "Humidity": humidity_plot.plot_humidity(hourly_df, location=location_label),
-            "Precipitation": precipitation_plot.plot_precipitation(hourly_df, location=location_label),
-            "Wind Speed": wind_plot.plot_wind_speed(hourly_df, location=location_label),
-            "Wind Direction Rose": wind_direction_plot.plot_wind_direction_rose(hourly_df, location=location_label),
-            "Wind Speed and Direction": wind_speed_direction_plot.plot_wind_speed_and_direction(hourly_df, location=location_label),
-            "Temperature & Humidity Combined": temperature_humidity_plot.plot_temperature_and_humidity(hourly_df, location=location_label),
-        }
-
-        if daily_df is not None:
-            chart_figures["Daily Temperature Range"] = daily_temperature_range_plot.plot_daily_temperature_range(daily_df, location=location_label)
-
-        for name, fig in chart_figures.items():
-            if fig:
-                png = save_fig_as_png(fig)
-                st.download_button(
-                    label=f"🖼️ Download {name}.png",
-                    data=png,
-                    file_name=f"{name.replace(' ', '_').lower()}.png",
-                    mime="image/png"
-                )
-
-        st.markdown("---")
 
     # 📊 Inline visualizations
     if hourly_df is not None and not hourly_df.empty:
         st.subheader("📊 Hourly Visualizations")
         col1, col2 = st.columns(2)
         with col1:
-            st.plotly_chart(chart_figures["Hourly Temperature"], use_container_width=True)
+            st.plotly_chart(temperature_plot.plot_hourly_temperature(hourly_df, location=location_label), use_container_width=True)
         with col2:
-            st.plotly_chart(chart_figures["Feels Like Temperature"], use_container_width=True)
+            st.plotly_chart(feels_like_temperature_plot.plot_feels_like_temperature(hourly_df, location=location_label), use_container_width=True)
 
         col3, col4 = st.columns(2)
         with col3:
-            st.plotly_chart(chart_figures["Humidity"], use_container_width=True)
+            st.plotly_chart(humidity_plot.plot_humidity(hourly_df, location=location_label), use_container_width=True)
         with col4:
-            st.plotly_chart(chart_figures["Precipitation"], use_container_width=True)
+            st.plotly_chart(precipitation_plot.plot_precipitation(hourly_df, location=location_label), use_container_width=True)
 
         st.subheader("💨 Wind Visualizations")
         col5, col6 = st.columns(2)
         with col5:
-            st.plotly_chart(chart_figures["Wind Speed"], use_container_width=True)
+            st.plotly_chart(wind_plot.plot_wind_speed(hourly_df, location=location_label), use_container_width=True)
         with col6:
-            st.plotly_chart(chart_figures["Wind Direction Rose"], use_container_width=True)
+            st.plotly_chart(wind_direction_plot.plot_wind_direction_rose(hourly_df, location=location_label), use_container_width=True)
 
-        st.plotly_chart(chart_figures["Wind Speed and Direction"], use_container_width=True)
+        st.plotly_chart(wind_speed_direction_plot.plot_wind_speed_and_direction(hourly_df, location=location_label), use_container_width=True)
 
         st.subheader("🌡️ Combined Forecasts")
-        st.plotly_chart(chart_figures["Temperature & Humidity Combined"], use_container_width=True)
+        st.plotly_chart(temperature_humidity_plot.plot_temperature_and_humidity(hourly_df, location=location_label), use_container_width=True)
 
     if daily_df is not None and not daily_df.empty:
         st.subheader("📅 Daily Forecast")
-        st.plotly_chart(chart_figures["Daily Temperature Range"], use_container_width=True)
+        st.plotly_chart(daily_temperature_range_plot.plot_daily_temperature_range(daily_df, location=location_label), use_container_width=True)
