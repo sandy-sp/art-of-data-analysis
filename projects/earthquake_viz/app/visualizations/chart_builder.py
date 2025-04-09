@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from datetime import datetime
 import os
+import numpy as np
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 # --- Output Directory ---
 OUTPUT_DIR = "temp_charts"
@@ -217,6 +220,48 @@ def create_location_scatter_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DI
         ax.scatter(lon[:i+1], lat[:i+1], 
                    s=mag[:i+1]**2,  # Magnitude as size
                    c='orange', alpha=0.6, edgecolors='black')
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
+def create_spiral_timeline(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/spiral_timeline.gif", max_frames=60):
+    """Creates a spiral animation where angle = time, radius = magnitude, color = depth."""
+    df = df.dropna(subset=["Time", "Magnitude", "Depth (km)"])
+    df["Parsed_Time"] = pd.to_datetime(df["Time"], errors='coerce')
+    df = df.dropna(subset=["Parsed_Time"])
+
+    df = df.sort_values("Parsed_Time")
+    mag = df["Magnitude"].values
+    depth = df["Depth (km)"].values
+
+    # Normalize for spiral
+    total = len(df)
+    step = max(1, total // max_frames)
+    frames = list(range(0, total, step))
+    interval = max(50, 10000 // len(frames))
+
+    angles = np.linspace(0, 4 * np.pi, total)  # 2 full spiral turns
+    radii = mag * 5  # Stretch radius
+    colors = cm.get_cmap("YlOrRd")(mcolors.Normalize(vmin=min(depth), vmax=max(depth))(depth))
+
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111, polar=True)
+
+    def update(i):
+        ax.clear()
+        ax.set_title("Spiral Earthquake Timeline", va='bottom')
+        ax.set_rticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.grid(False)
+        ax.set_facecolor("black")
+
+        ax.scatter(angles[:i+1], radii[:i+1], 
+                   c=colors[:i+1], 
+                   s=mag[:i+1]**2, 
+                   alpha=0.8, edgecolors='white', linewidth=0.5)
 
     ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
     ani.save(output_path, writer='pillow')
