@@ -1,7 +1,13 @@
 import geopandas as gpd
 import logging
 import os
-import streamlit as st # Import Streamlit for caching
+import streamlit as st 
+import pandas as pd
+import os
+import logging
+
+CITY_FILE_PATH = "data/geonames/cities500.txt"
+ADMIN1_CODES_FILE = "data/geonames/admin1CodesASCII.txt"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -97,29 +103,53 @@ def get_country_bounds(country_name: str, world_gdf: gpd.GeoDataFrame) -> list |
         logging.error(f"Error finding bounds for country '{country_name}': {e}", exc_info=True)
         return None
 
-# Example usage (for testing)
-if __name__ == '__main__':
-    # Replace with the actual path to your shapefile
-    shp_path = '../../data/shapefiles/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp'
-    print(f"Testing shapefile load from: {shp_path}")
-    world, country_list = load_world_shapefile(shp_path)
-    if world is not None:
-        print("Shapefile loaded.")
-        if country_list:
-            print(f"Extracted {len(country_list)} unique country names.")
-        # Test finding a country
-        country = "Germany"
-        bounds = get_country_bounds(country, world)
-        if bounds:
-            print(f"Bounds for {country}: {bounds}")
-        else:
-            print(f"Could not find bounds for {country}")
+# --- GeoNames Cities Loading (Cached) ---
+@st.cache_resource(show_spinner=False)
+def load_geonames_cities() -> pd.DataFrame:
+    """Loads cities500.txt from GeoNames into a DataFrame."""
+    if not os.path.exists(CITY_FILE_PATH):
+        st.error(f"GeoNames city file not found at {CITY_FILE_PATH}")
+        return pd.DataFrame()
 
-        country = "United States of America" # Name might differ in shapefile
-        bounds = get_country_bounds(country, world)
-        if bounds:
-            print(f"Bounds for {country}: {bounds}")
-        else:
-            print(f"Could not find bounds for {country}")
-    else:
-         print("Failed to load shapefile for testing.")
+    columns = [
+        "geonameid", "name", "asciiname", "alternatenames", "latitude", "longitude",
+        "feature_class", "feature_code", "country_code", "cc2", "admin1_code", "admin2_code",
+        "admin3_code", "admin4_code", "population", "elevation", "dem",
+        "timezone", "modification_date"
+    ]
+    df = pd.read_csv(CITY_FILE_PATH, sep="\t", header=None, names=columns, dtype=str)
+    df["latitude"] = df["latitude"].astype(float)
+    df["longitude"] = df["longitude"].astype(float)
+    df["population"] = df["population"].astype(int)
+    return df
+
+@st.cache_resource(show_spinner=False)
+def get_cities_by_admin1(country_code: str, admin1_code: str) -> list:
+    """Returns a list of city names in a given admin1 region."""
+    df = load_geonames_cities()
+    if df.empty:
+        return []
+
+    filtered = df[
+        (df["country_code"] == country_code) &
+        (df["admin1_code"] == admin1_code)
+    ]
+    cities = filtered.sort_values("population", ascending=False)["name"].unique().tolist()
+    return cities
+
+@st.cache_resource(show_spinner=False)
+def get_city_coordinates(country_code: str, admin1_code: str, city_name: str) -> tuple | None:
+    """Returns (lat, lon) for a given city."""
+    df = load_geonames_cities()
+    if df.empty:
+        return None
+
+    filtered = df[
+        (df["country_code"] == country_code) &
+        (df["admin1_code"] == admin1_code) &
+        (df["name"].str.lower() == city_name.lower())
+    ]
+    if filtered.empty:
+        return None
+    row = filtered.iloc[0]
+    return (row["latitude"], row["longitude"])
