@@ -6,8 +6,7 @@ import pandas as pd
 # Local application imports
 from app.ui import controls
 from app.core import usgs_api
-from app.config.boundaries import SHAPEFILE_PATH
-from app.core import geo_utils
+from app.core import geo_utils  # Keep this import
 from app.visualizations import map_builder
 from app.core import data_handler
 from app.visualizations import chart_builder
@@ -21,9 +20,10 @@ st.title("🌍 USGS Earthquake Data Visualizer")
 st.markdown("Enter a country name to explore earthquake data within its boundaries for a time range.")
 st.markdown("---")
 
-# Load shapefile and country list
+# Load shapefile and country list - *** REMOVE THE ARGUMENT ***
 with st.spinner("Loading world boundaries map and country list..."):
-    world_gdf, country_list = geo_utils.load_world_shapefile(SHAPEFILE_PATH)
+    # world_gdf, country_list = geo_utils.load_world_shapefile(SHAPEFILE_PATH)  # OLD WAY
+    world_gdf, country_list = geo_utils.load_world_shapefile()  # NEW WAY (No argument)
 
 if world_gdf is None or country_list is None:
     st.error("Application cannot start because the world boundaries data failed to load. Please check the path and file integrity.")
