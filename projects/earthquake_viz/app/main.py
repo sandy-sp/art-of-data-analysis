@@ -19,11 +19,9 @@ from app.core import usgs_api
 # Import the functions, not the pre-loaded data constants
 from app.core.geo_utils import (
     load_world_shapefile,
-    load_geonames_iso_codes, # New function
-    load_country_name_to_iso_mapping,
+    load_geonames_iso_codes,
     load_admin1_data,
     load_geonames_cities,
-    get_iso_code_for_country, # Keep lookup functions
     get_admin1_names_for_country,
     get_admin1_code,
     get_cities_for_admin1,
