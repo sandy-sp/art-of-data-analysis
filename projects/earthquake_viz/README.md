@@ -56,7 +56,6 @@ This project is an interactive web application built with Python and Streamlit. 
 
 ## 📁 Project Structure
 
-## 📁 Project Structure
 
 The project is organized into a modular structure to ensure separation of concerns:
 
