@@ -1,6 +1,6 @@
 import requests
 
-def fetch_weather_data(latitude, longitude, hourly_variables, daily_variables=None, forecast_days=7):
+def fetch_weather_data(latitude, longitude, hourly_variables, daily_variables=None, forecast_days=7, timeout=10):
     """Fetches weather data from the Open-Meteo API."""
     base_url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -13,11 +13,10 @@ def fetch_weather_data(latitude, longitude, hourly_variables, daily_variables=No
         params["daily"] = ",".join(daily_variables)
 
     try:
-        response = requests.get(base_url, params=params, timeout=10)
-        response.raise_for_status()  # Raise exception for HTTP errors
+        response = requests.get(base_url, params=params, timeout=timeout)
+        response.raise_for_status()
         data = response.json()
 
-        # Basic structure validation
         if not data or "hourly" not in data or not data.get("hourly", {}).get("time"):
             print("Warning: Incomplete or malformed response received from API.")
             return None
