@@ -268,3 +268,77 @@ def create_spiral_timeline(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/spiral_t
     plt.close()
     return output_path
 
+def create_shockwave_map_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/shockwave.gif", max_frames=60):
+    """
+    Creates an animated shockwave map where each earthquake emits an expanding ripple.
+    Circle size is based on magnitude, and it fades out after a few frames.
+    """
+    import numpy as np
+
+    df = df.dropna(subset=["Latitude", "Longitude", "Magnitude", "Time"])
+    df["Parsed_Time"] = pd.to_datetime(df["Time"], errors='coerce')
+    df = df.dropna(subset=["Parsed_Time"]).sort_values("Parsed_Time")
+
+    lat = df["Latitude"].values
+    lon = df["Longitude"].values
+    mag = df["Magnitude"].values
+    total = len(df)
+
+    # Limit number of earthquakes shown if needed
+    step = max(1, total // max_frames)
+    indices = list(range(0, total, step))
+    interval = max(50, 10000 // len(indices))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_title("Shockwave Earthquake Animation")
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    lat_margin = 2
+    lon_margin = 2
+    ax.set_xlim(lon.min() - lon_margin, lon.max() + lon_margin)
+    ax.set_ylim(lat.min() - lat_margin, lat.max() + lat_margin)
+    ax.grid(True)
+
+    shockwaves = []
+
+    def update(i):
+        ax.clear()
+        ax.set_title("Shockwave Earthquake Animation")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_xlim(lon.min() - lon_margin, lon.max() + lon_margin)
+        ax.set_ylim(lat.min() - lat_margin, lat.max() + lat_margin)
+        ax.grid(True)
+
+        # Add the current quake as a new ripple
+        shockwaves.append({
+            "x": lon[indices[i]],
+            "y": lat[indices[i]],
+            "mag": mag[indices[i]],
+            "radius": 0,
+            "alpha": 1.0
+        })
+
+        # Animate all active shockwaves
+        next_waves = []
+        for wave in shockwaves:
+            radius = wave["radius"]
+            alpha = wave["alpha"]
+            if alpha > 0:
+                circle = plt.Circle((wave["x"], wave["y"]),
+                                    radius=radius,
+                                    edgecolor='orange',
+                                    facecolor='none',
+                                    lw=2,
+                                    alpha=alpha)
+                ax.add_patch(circle)
+                wave["radius"] += wave["mag"] * 0.2  # expand based on magnitude
+                wave["alpha"] -= 0.05  # fade out
+                next_waves.append(wave)
+        shockwaves[:] = next_waves
+
+    ani = animation.FuncAnimation(fig, update, frames=len(indices), interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
