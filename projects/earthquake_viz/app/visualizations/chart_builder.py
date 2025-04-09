@@ -342,3 +342,58 @@ def create_shockwave_map_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/
     plt.close()
     return output_path
 
+def create_depth_strip_chart_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/depth_strip.gif", max_frames=60):
+    """
+    Creates an animated horizontal strip chart of earthquakes across depth layers over time.
+    Y-axis: Depth category (shallow, intermediate, deep)
+    X-axis: Time
+    """
+    df = df.dropna(subset=["Time", "Depth (km)", "Magnitude"])
+    df["Parsed_Time"] = pd.to_datetime(df["Time"], errors='coerce')
+    df = df.dropna(subset=["Parsed_Time"]).sort_values("Parsed_Time")
+
+    # Categorize depth
+    def categorize_depth(depth):
+        if depth < 70:
+            return "Shallow (<70km)"
+        elif depth < 300:
+            return "Intermediate (70–300km)"
+        else:
+            return "Deep (>300km)"
+
+    df["Depth_Category"] = df["Depth (km)"].apply(categorize_depth)
+
+    categories = ["Shallow (<70km)", "Intermediate (70–300km)", "Deep (>300km)"]
+    y_positions = {cat: i for i, cat in enumerate(categories)}
+
+    total = len(df)
+    step = max(1, total // max_frames)
+    frames = list(range(0, total, step))
+    interval = max(50, 10000 // len(frames))
+
+    times = df["Parsed_Time"].values
+    magnitudes = df["Magnitude"].values
+    categories_seq = df["Depth_Category"].values
+    y_vals = [y_positions[c] for c in categories_seq]
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    def update(i):
+        ax.clear()
+        ax.set_title("Earthquake Depth Strip Over Time")
+        ax.set_xlabel("Time")
+        ax.set_yticks(list(y_positions.values()))
+        ax.set_yticklabels(list(y_positions.keys()))
+        ax.set_xlim(times[0], times[-1])
+        ax.set_ylim(-0.5, len(categories) - 0.5)
+        ax.grid(True, axis='x', linestyle='--', alpha=0.3)
+
+        ax.scatter(times[:i+1], [y_positions[c] for c in categories_seq[:i+1]],
+                   s=magnitudes[:i+1]**2,
+                   color='purple', alpha=0.6, edgecolors='black')
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
