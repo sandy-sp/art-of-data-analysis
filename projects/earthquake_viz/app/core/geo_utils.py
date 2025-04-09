@@ -167,23 +167,25 @@ def load_country_name_to_iso_mapping(_world_gdf: Optional[gpd.GeoDataFrame]) -> 
         normalized_mapping = {}
         ne_names = set(_world_gdf['NE_COUNTRY_NAME'])
 
-        # Define overrides mapping NE name -> GeoNames name in countryInfo.txt
-        # **This mapping is critical and specific to your Natural Earth version vs GeoNames**
-        # **You MUST verify these mappings.**
+        # --- !!! UPDATED DICTIONARY !!! ---
+        # Define overrides mapping: ShapefileName -> GeoNames_countryInfo.txt_Name
+        # Keys are names found in shapefile's 'ADMIN' col, Values are names in countryInfo.txt 'Country' col
         ne_to_geonames_overrides = {
-            # NE Name : GeoNames Name
-            "United States": "United States",
-            "Russia": "Russian Federation", # Assuming NE uses 'Russia', GeoNames uses 'Russian Federation'
+            "United States of America": "United States",
             "South Korea": "Korea, Republic of",
             "North Korea": "Korea, Democratic People's Republic of",
+            "Republic of Serbia": "Serbia",
+            "The Bahamas": "Bahamas",
+            "Netherlands": "The Netherlands",
+            "Vietnam": "Viet Nam",
+            "eSwatini": "Eswatini",
+            "Palestine": "Palestinian Territory",
+            "Russia": "Russian Federation",
             "Iran": "Iran, Islamic Republic of",
             "Syria": "Syrian Arab Republic",
-            "Vietnam": "Viet Nam",
             "Czechia": "Czech Republic",
-            "Serbia": "Republic of Serbia",
-            "Macedonia": "North Macedonia", # Or "The former Yugoslav Republic of Macedonia" depending on NE version
+            "Macedonia": "North Macedonia",
             "United Kingdom": "United Kingdom",
-            # ... Add other necessary overrides ...
         }
 
         # Build the final map keyed by NE name
