@@ -1,29 +1,40 @@
 import geopandas as gpd
 import logging
 import os
-import streamlit as st 
+import streamlit as st
+import pathlib  # Import the pathlib library
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# --- Construct the path dynamically ---
+# Get the directory where *this* script (geo_utils.py) is located
+SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
+# Go up two levels (from core/ to app/ to the project root) and then into data/shapefiles...
+SHAPEFILE_PATH = SCRIPT_DIR.parent.parent / "data" / "shapefiles" / "ne_110m_admin_0_countries" / "ne_110m_admin_0_countries.shp"
+# --- End modification ---
+
 # --- Shapefile Loading (Cached) ---
-# Use st.cache_resource to load the large shapefile only once.
 @st.cache_resource(show_spinner=False)
-def load_world_shapefile(shapefile_path: str):
+def load_world_shapefile():  # Remove the path argument, use the global SHAPEFILE_PATH
     """
     Loads the world shapefile and extracts a list of country names.
+    Uses the SHAPEFILE_PATH defined above.
 
     Returns:
         tuple(gpd.GeoDataFrame | None, list[str] | None): A tuple containing
         the loaded GeoDataFrame (or None on error) and a sorted list of
         unique country names (or None on error).
     """
-    if not os.path.exists(shapefile_path):
-        logging.error(f"Shapefile not found at path: {shapefile_path}")
-        st.error(f"Error: World boundaries shapefile not found at {shapefile_path}. Please download and place it correctly.")
-        return None, None  # Return None for both gdf and list
+    # Check if the constructed path exists
+    if not os.path.exists(SHAPEFILE_PATH):  # Use the global path
+        logging.error(f"Shapefile not found at calculated path: {SHAPEFILE_PATH}")
+        # Show the path in the error message for easier debugging
+        st.error(f"Error: World boundaries shapefile not found at expected location: {SHAPEFILE_PATH}. Please ensure it's in your GitHub repository relative to the project structure.")
+        return None, None
     try:
-        logging.info(f"Loading shapefile from: {shapefile_path}")
-        world_gdf = gpd.read_file(shapefile_path)
+        logging.info(f"Loading shapefile from: {SHAPEFILE_PATH}")  # Use the global path
+        # Use the global SHAPEFILE_PATH variable when reading
+        world_gdf = gpd.read_file(SHAPEFILE_PATH)
 
         # --- Identify country name column ---
         original_name_column = 'ADMIN'  # Example: Adjust this!
@@ -52,7 +63,7 @@ def load_world_shapefile(shapefile_path: str):
         return world_gdf, country_list  # Return both GDF and the list
 
     except Exception as e:
-        logging.error(f"Failed to load or process shapefile {shapefile_path}: {e}", exc_info=True)
+        logging.error(f"Failed to load or process shapefile {SHAPEFILE_PATH}: {e}", exc_info=True)
         st.error(f"Error loading shapefile: {e}")
         return None, None  # Return None for both
 
