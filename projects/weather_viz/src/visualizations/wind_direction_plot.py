@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from .plot_utils import apply_common_layout  # ⬅️ Add this import
+from .plot_utils import apply_common_layout
 
 def plot_wind_direction_rose(hourly_df, location=None):
     """
@@ -14,22 +14,25 @@ def plot_wind_direction_rose(hourly_df, location=None):
         not hourly_df.empty and 
         all(col in hourly_df.columns for col in required_cols)
     ):
-        # Bin wind directions into compass sectors
         directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
                       'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
-        bins = np.linspace(0, 360, len(directions)+1)
+        bins = np.linspace(0, 360, len(directions) + 1)
 
         wind_dirs = hourly_df['winddirection_10m'].dropna().values
         counts, _ = np.histogram(wind_dirs, bins=bins)
 
+        # Mid-angles for each bin
+        theta_vals = [(bins[i] + bins[i+1]) / 2 for i in range(len(directions))]
+
         fig = go.Figure(go.Barpolar(
             r=counts,
-            theta=[(bins[i] + bins[i+1])/2 for i in range(len(directions))],
+            theta=theta_vals,
             width=[22.5] * len(directions),
             marker_color='rgba(0,123,255,0.7)',
             marker_line_color='black',
             marker_line_width=1,
             opacity=0.8,
+            hovertemplate='Direction: %{theta}°<br>Count: %{r}<extra></extra>'
         ))
 
         title = f"Hourly Wind Direction Rose for {location}" if location else "Hourly Wind Direction Rose"
@@ -48,15 +51,3 @@ def plot_wind_direction_rose(hourly_df, location=None):
 
         return apply_common_layout(fig, title)
     return None
-
-# Optional standalone test
-if __name__ == "__main__":
-    data = {
-        'time': pd.to_datetime(['2025-04-04T00:00', '2025-04-04T01:00', '2025-04-04T02:00', '2025-04-04T03:00']),
-        'winddirection_10m': [0, 90, 180, 270],
-        'windspeed_10m': [5, 10, 8, 12]
-    }
-    sample_hourly_df = pd.DataFrame(data)
-    fig = plot_wind_direction_rose(sample_hourly_df, location="Cleveland, OH")
-    if fig:
-        fig.show()
