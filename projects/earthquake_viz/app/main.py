@@ -1,6 +1,5 @@
 import streamlit as st
 import logging
-import json
 import pandas as pd
 
 # Local application imports
@@ -35,8 +34,10 @@ if world_gdf is None or country_list is None:  # Check both parts
 
 # Sidebar controls
 user_inputs = controls.display_sidebar_controls(country_list)  # Pass country_list to controls function
-if user_inputs["city_name"]:
-    coords = get_city_coordinates("US", user_inputs["state_name"], user_inputs["city_name"])
+if user_inputs["city_name"] and user_inputs["country_code"] and user_inputs["admin1_code"]:
+    coords = get_city_coordinates(
+        user_inputs["country_code"], user_inputs["admin1_code"], user_inputs["city_name"]
+    )
     if coords:
         st.info(f"City center: {coords}, Radius: {user_inputs['radius_km']} km")
 
@@ -109,7 +110,7 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
             num_events = len(geojson_data['features'])
             st.success(f"✅ Found {num_events} earthquake events for '{country_name}' (Data from cache or API).")
             with st.spinner(f"🗺️ Generating map for {num_events} events..."):
-                earthquake_map = map_builder.create_earthquake_map(geojson_data, center_on_bounds=bounding_box)
+                earthquake_map = map_builder.create_earthquake_map(geojson_data, center_on_bounds=map_center_bounds)
             if earthquake_map:
                 st.info("Displaying Interactive Map:")
                 map_html = earthquake_map._repr_html_()
