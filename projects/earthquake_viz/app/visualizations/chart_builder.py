@@ -118,3 +118,39 @@ def create_location_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/locat
     ani.save(output_path, writer='pillow')
     plt.close()
     return output_path
+
+def create_cumulative_time_series(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/cumulative_timeseries.gif", max_frames=60):
+    """Creates an animated cumulative time series chart of earthquakes per day."""
+    if "Time" not in df.columns:
+        return None
+
+    df["Parsed_Time"] = pd.to_datetime(df["Time"], errors='coerce')
+    df = df.dropna(subset=["Parsed_Time"])
+    df["Date"] = df["Parsed_Time"].dt.date
+    daily_counts = df.groupby("Date").size().sort_index().cumsum()
+
+    dates = daily_counts.index
+    values = daily_counts.values
+
+    total = len(dates)
+    step = max(1, total // max_frames)
+    frames = list(range(0, total, step))
+    interval = max(50, 10000 // len(frames))  # Total ~10 sec
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    def update(i):
+        ax.clear()
+        ax.plot(dates[:i+1], values[:i+1], color='dodgerblue', marker='o')
+        ax.set_title("Cumulative Earthquakes Over Time")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Total Earthquakes")
+        ax.set_ylim(0, max(values) + 5)
+        ax.set_xlim(dates[0], dates[-1])
+        ax.tick_params(axis='x', rotation=45)
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
