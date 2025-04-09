@@ -22,11 +22,13 @@ from app.core.geo_utils import (
     load_geonames_iso_codes,
     load_admin1_data,
     load_geonames_cities,
+    load_admin1_shapefile,  # <-- Import new loader
     get_admin1_names_for_country,
     get_admin1_code,
     get_cities_for_admin1,
     get_city_coordinates,
-    get_country_bounds
+    get_country_bounds,
+    get_state_bounds  # <-- Import new bounds getter
 )
 from app.visualizations import map_builder
 from app.core import data_handler
@@ -37,56 +39,46 @@ import streamlit.components.v1 as components
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- Load Data Function (with robust error handling) ---
+# --- Load Data Function (Modified to include Admin1 GDF) ---
 def load_initial_data():
-    """Loads geographic data, creates NE Name -> ISO map using shapefile codes."""
+    """Loads geographic data, including Admin 1 shapes."""
     geo_data_dict = {
         "world_gdf": None, "ne_country_list": None, "ne_name_to_iso_map": {},
-        "admin1_data": None, "cities_df": None
+        "admin1_gdf": None, "admin1_data": None, "cities_df": None  # Add admin1_gdf
     }
     try:
-        # 1. Load Shapefile (includes ISO_A2 column now)
+        # 1. Load World Shapefile (includes ISO_A2)
         world_gdf, ne_country_list = load_world_shapefile()
         if world_gdf is None or ne_country_list is None:
-            logging.error("load_world_shapefile failed. Cannot proceed.")
             return None
-
         geo_data_dict["world_gdf"] = world_gdf
         geo_data_dict["ne_country_list"] = ne_country_list
 
-        # 2. Load valid ISO codes from GeoNames
-        valid_geonames_iso_codes = load_geonames_iso_codes()
-        if not valid_geonames_iso_codes:
-            logging.warning("Failed to load valid ISO codes from GeoNames countryInfo.txt. ISO mapping might be incomplete.")
+        # 2. Load Admin 1 Shapefile
+        admin1_gdf = load_admin1_shapefile()  # Load state shapes
+        geo_data_dict["admin1_gdf"] = admin1_gdf  # Store it, even if None
 
-        # 3. Create NE Name -> ISO Code map from Shapefile Data
+        # 3. Load valid ISO codes from GeoNames
+        valid_geonames_iso_codes = load_geonames_iso_codes()
+
+        # 4. Create NE Name -> ISO Code map from World Shapefile Data
         ne_name_to_iso_map = {}
-        unvalidated_iso_codes = []
         if 'ISO_A2' in world_gdf.columns:
             ne_name_to_iso_map = dict(zip(world_gdf['NE_COUNTRY_NAME'], world_gdf['ISO_A2']))
-            logging.info(f"Created initial Name -> ISO map with {len(ne_name_to_iso_map)} entries from shapefile.")
-
-            for ne_name, iso_code in ne_name_to_iso_map.items():
-                if iso_code not in valid_geonames_iso_codes and iso_code != '-99':
-                    unvalidated_iso_codes.append(f"{ne_name} ({iso_code})")
-            if unvalidated_iso_codes:
-                logging.warning(f"Shapefile ISO codes not found in GeoNames countryInfo.txt for: {unvalidated_iso_codes[:10]}")
+            logging.info(f"Created initial Name -> ISO map with {len(ne_name_to_iso_map)} entries.")
         else:
-            logging.error("ISO_A2 column not found in loaded world_gdf. Cannot create Name -> ISO map.")
-            st.error("Application Error: ISO_A2 code column missing from shapefile, cannot proceed with filtering.")
+            logging.error("ISO_A2 column not found in world_gdf. Cannot create Name -> ISO map.")
             return None
-
         geo_data_dict["ne_name_to_iso_map"] = ne_name_to_iso_map
 
-        # 4. Load Admin1 and City data
+        # 5. Load Admin1 (GeoNames codes) and City data
         geo_data_dict["admin1_data"] = load_admin1_data()
         geo_data_dict["cities_df"] = load_geonames_cities()
 
         return geo_data_dict
-
     except Exception as e:
-        st.error(f"An unexpected error occurred during initial data loading: {e}")
-        logging.error("Unexpected error in load_initial_data sequence", exc_info=True)
+        st.error(f"Unexpected error during initial data loading: {e}")
+        logging.error("Error in load_initial_data sequence", exc_info=True)
         return None
 
 # --- Main App Logic ---
@@ -182,7 +174,28 @@ if fetch_button_pressed:
         else:
             st.error(f"Could not find coordinates for city: {city_name}")
 
-    elif selected_level in ["State", "Country"] and country_name:
+    elif selected_level == "State" and state_name and country_iso_code:
+        # State level: Use COUNTRY bounds for API, STATE bounds for MAP centering
+        fetch_location_description = f"state: {state_name}, {country_name}"
+        logging.info(f"State selected. Using country bounds for API, state bounds for map zoom.")
+        # 1. Get Country bounds for API call
+        country_bounds = get_country_bounds(country_name, geo_data["world_gdf"])
+        if country_bounds:
+            api_params["bounding_box"] = country_bounds  # API uses country bounds
+            # 2. Get State bounds for map centering
+            with st.spinner(f"Looking up boundaries for state: {state_name}..."):
+                map_center_bounds = get_state_bounds(country_iso_code, state_name, geo_data["admin1_gdf"])
+            if map_center_bounds:
+                execute_fetch = True  # Can fetch even if state bounds failed, just zoom might be off
+                logging.info(f"Found state bounds for map centering: {map_center_bounds}")
+            else:
+                st.warning(f"Could not find specific bounds for state '{state_name}'. Map will center on country.")
+                map_center_bounds = country_bounds  # Fallback map zoom to country bounds
+                execute_fetch = True  # Still allow fetch
+        else:
+            st.error(f"Could not determine boundaries for country: {country_name}")
+
+    elif selected_level == "Country" and country_name:
         fetch_location_description = f"country: {country_name}"
         if selected_level == "State":
             fetch_location_description = f"state: {state_name}, {country_name} (using country bounds)"
