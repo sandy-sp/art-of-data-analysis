@@ -30,7 +30,8 @@ An interactive web app to visualize hourly and daily weather forecasts using the
 
 ## 🖥️ Live App Demo
 
-> Coming soon! (You can deploy to [Streamlit Cloud](https://streamlit.io/cloud) or use Docker.)
+> ✅ Live Demo: [🌦️ Weather Forecast Visualizer](https://art-of-data-analysis-weather-viz.streamlit.app/)
+
 
 ---
 
@@ -81,33 +82,16 @@ weather_viz/
 ├── app.py                      # Streamlit app entry point
 ├── requirements.txt
 ├── src/
-│   ├── api_handler.py          # Fetches weather data from API
-│   ├── data_processor.py       # Cleans and enriches raw API data
-│   └── visualizations/         # All interactive Plotly visualizations
-└── reports/
-    └── visualizations/         # (Optional static images)
+   ├── api_handler.py          # Fetches weather data from API
+   ├── data_processor.py       # Cleans and enriches raw API data
+   └── visualizations/         # All interactive Plotly visualizations
+    .....
 ```
 
 ---
 
-## 📸 Sample Visualizations
-
-> You can add screenshots of:
-- Hourly Temperature Line Chart
-- Feels-like vs Actual Temperature
-- Wind Speed Vectors
-- Wind Direction Rose
-
----
-
-## 📤 Deployment Options
-
-You can deploy this app via:
-- [Streamlit Cloud](https://streamlit.io/cloud)
-- [Render](https://render.com)
-- Docker + Cloud VM (e.g., EC2, Linode, DigitalOcean)
-
-Let us know if you’d like a one-click deployment guide.
+## 📸 Sample Video
+[![🌦️ Weather Forecast Visualizer](assets/weather_viz.png)](assets/weather_viz.mp4)
 
 ---
 
