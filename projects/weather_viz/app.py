@@ -32,6 +32,40 @@ def save_fig_as_png(fig):
     return buf
 
 st.set_page_config(page_title="Weather Visualizer", layout="wide")
+
+with st.sidebar:
+    st.markdown("<div style='height: 100%; display: flex; flex-direction: column; justify-content: flex-end;'>", unsafe_allow_html=True)
+    st.markdown("""
+    <p style='margin-top: 10px; font-size: 16px;'>
+        📘 Curious how this project works under the hood? <a href='https://github.com/sandy-sp/art-of-data-analysis/tree/main/projects/weather_viz/README.md' target='_blank'>Check out the GitHub README</a> for code, setup, and deployment tips.
+    </p>
+    <p style='margin-top: 20px; font-size: 16px;'>
+        💡 Enjoying this project? Interested in building similar data apps or collaborating on weather and visualization tools?
+        Let’s connect and share ideas!
+    </p>
+    <style>
+    .social-icons a {
+        text-decoration: none;
+        font-size: 20px;
+        display: inline-flex;
+        align-items: center;
+        margin-right: 10px;
+        margin-bottom: 6px;
+    }
+    .social-icons a:hover {
+        text-decoration: underline;
+    }
+    </style>
+    <div class='social-icons'>
+        <a href="https://www.linkedin.com/in/sandeep-paidipati" target="_blank">
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg" width="24" style="margin-right:8px; vertical-align:middle;" /> LinkedIn
+        </a><br>
+        <a href="https://github.com/sandy-sp" target="_blank">
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" width="24" style="margin-right:8px; vertical-align:middle;" /> GitHub
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 st.title("\U0001F324\uFE0F Weather Forecast Visualizer")
 
 st.markdown("""
