@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 import logging
 import os
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 
 # --- File Paths ---
 WORLD_SHP_PATH = "data/shapefiles/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp"
@@ -17,9 +17,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # -----------------------------------------------------------------------------
 # 🌍 DATA LOADING FUNCTIONS (Called from main.py)
 # -----------------------------------------------------------------------------
-
-# ... load_world_shapefile, load_admin1_data, load_geonames_cities remain the same ...
-# ... from the previous correct version ...
 
 @st.cache_resource(show_spinner="Loading country boundaries...")
 def load_world_shapefile(shapefile_path: str = WORLD_SHP_PATH) -> Tuple[Optional[gpd.GeoDataFrame], Optional[List[str]]]:
@@ -37,11 +34,18 @@ def load_world_shapefile(shapefile_path: str = WORLD_SHP_PATH) -> Tuple[Optional
             logging.error(f"Could not find a suitable country name column in shapefile: {shapefile_path}")
             return None, None
 
+        iso_col_candidates = ['ISO_A2', 'ADM0_A2', 'ISO_A2_EH']
+        iso_col = next((col for col in iso_col_candidates if col in gdf.columns), None)
+        if not iso_col:
+            st.error(f"Could not find a suitable ISO column in shapefile: {shapefile_path}")
+            logging.error(f"Could not find a suitable ISO column in shapefile: {shapefile_path}")
+            return None, None
+
         gdf['NE_COUNTRY_NAME'] = gdf[name_col]
-        gdf.dropna(subset=['NE_COUNTRY_NAME'], inplace=True)
+        gdf.dropna(subset=['NE_COUNTRY_NAME', iso_col], inplace=True)
         country_list = sorted(gdf['NE_COUNTRY_NAME'].unique().tolist())
-        logging.info(f"Loaded world shapefile. Found {len(country_list)} countries using column '{name_col}'.")
-        return gdf[['NE_COUNTRY_NAME', 'geometry', name_col]], country_list
+        logging.info(f"Loaded world shapefile. Found {len(country_list)} countries using name column '{name_col}' and ISO column '{iso_col}'.")
+        return gdf[['NE_COUNTRY_NAME', iso_col, 'geometry']].rename(columns={iso_col: 'ISO_A2'}), country_list
     except Exception as e:
         st.error(f"Error loading country shapefile: {e}")
         logging.error(f"Error loading country shapefile: {e}", exc_info=True)
@@ -100,129 +104,35 @@ def load_geonames_cities() -> pd.DataFrame:
         logging.error(f"Error loading GeoNames city file: {e}", exc_info=True)
         return pd.DataFrame()
 
-
-# --- Updated Country Name to ISO Mapping Function ---
-@st.cache_resource(show_spinner="Loading country code mappings...")
-def load_country_name_to_iso_mapping(_world_gdf: Optional[gpd.GeoDataFrame]) -> Dict[str, str]:
-    """Loads mapping from Natural Earth country name to ISO code, handling parsing errors."""
-    mapping: Dict[str, str] = {} # Initialize as empty dict
-
-    # 1. Check for dependent GeoDataFrame first
-    if _world_gdf is None or _world_gdf.empty:
-         st.warning("World GeoDataFrame not available for country name normalization. Cannot create mapping.")
-         logging.warning("World GDF is None or empty in load_country_name_to_iso_mapping.")
-         return mapping # Return empty if dependent data is missing
-
-    # 2. Check if the target file exists
+@st.cache_resource(show_spinner="Loading GeoNames ISO codes...")
+def load_geonames_iso_codes() -> Set[str]:
+    """ Parses countryInfo.txt to get a set of valid ISO A2 codes. """
+    iso_codes: Set[str] = set()
     if not os.path.exists(COUNTRY_CODES_FILE):
         st.error(f"CRITICAL: Required GeoNames country info file not found at: {COUNTRY_CODES_FILE}")
         logging.error(f"CRITICAL: Required file not found: {COUNTRY_CODES_FILE}")
-        return mapping # Return empty dict if file missing
+        return iso_codes
 
-    # 3. Attempt to parse the file
-    df_info = None
     try:
         df_info = pd.read_csv(
-            COUNTRY_CODES_FILE,
-            sep='\t',
-            comment='#',          # Ignore comment lines [cite: 1]
-            header=None,          # No header row in the data section [cite: 9]
-            usecols=[0, 4],       # Column 0: ISO, Column 4: Country Name [cite: 9]
-            names=['ISO', 'Country'], # Assign names
-            dtype=str,            # Treat data as string
-            encoding='utf-8',     # Explicitly use UTF-8
-            on_bad_lines='warn'   # Warn about lines that can't be parsed instead of erroring immediately
+            COUNTRY_CODES_FILE, sep='\t', comment='#', header=None,
+            usecols=[0], names=['ISO'], dtype=str, encoding='utf-8', on_bad_lines='warn'
         )
-        # Check if parsing resulted in an empty DataFrame
-        if df_info.empty:
-            st.error(f"CRITICAL: Parsed country info file ('{COUNTRY_CODES_FILE}') but resulted in an empty DataFrame. Check file content/format.")
-            logging.error(f"CRITICAL: Parsed {COUNTRY_CODES_FILE} resulted in an empty DataFrame.")
-            return mapping # Return empty dict
-
-        logging.info(f"Successfully parsed {COUNTRY_CODES_FILE}. Shape: {df_info.shape}")
-        # Optional: Log head for detailed debug if needed
-        # logging.debug(f"Head of parsed country info:\n{df_info.head()}")
-
-    except pd.errors.EmptyDataError:
-        st.error(f"CRITICAL: GeoNames country info file is empty: {COUNTRY_CODES_FILE}")
-        logging.error(f"CRITICAL: pd.errors.EmptyDataError for {COUNTRY_CODES_FILE}")
-        return mapping
+        if not df_info.empty:
+            iso_codes = set(df_info['ISO'].unique())
+            logging.info(f"Loaded {len(iso_codes)} unique ISO A2 codes from {COUNTRY_CODES_FILE}.")
+        else:
+            logging.error(f"Parsed {COUNTRY_CODES_FILE} but resulted in an empty DataFrame.")
+            st.error(f"Parsed country info file ('{COUNTRY_CODES_FILE}') but found no ISO codes.")
+        return iso_codes
     except Exception as e:
-        st.error(f"CRITICAL: Failed to parse GeoNames country info file: {COUNTRY_CODES_FILE}. Error: {e}")
-        logging.error(f"CRITICAL: Error parsing {COUNTRY_CODES_FILE} with pandas", exc_info=True)
-        return mapping # Return empty dict on other parsing failures
-
-    # 4. Proceed with mapping creation and normalization if parsing was successful
-    try:
-        # Create initial mapping from GeoNames Name -> ISO Code
-        geonames_mapping = dict(zip(df_info['Country'], df_info['ISO']))
-        if not geonames_mapping:
-             logging.error("Created an empty geonames_mapping dictionary after parsing. Check parsing logic/file.")
-             return {} # Return empty if the dict creation failed
-
-        logging.info(f"Loaded {len(geonames_mapping)} raw country name to ISO code mappings from file.")
-
-        # --- Normalization Step ---
-        # (Using the _world_gdf passed as argument)
-        normalized_mapping = {}
-        ne_names = set(_world_gdf['NE_COUNTRY_NAME'])
-
-        # --- !!! UPDATED DICTIONARY !!! ---
-        # Define overrides mapping: ShapefileName -> GeoNames_countryInfo.txt_Name
-        # Keys are names found in shapefile's 'ADMIN' col, Values are names in countryInfo.txt 'Country' col
-        ne_to_geonames_overrides = {
-            "United States of America": "United States",
-            "South Korea": "Korea, Republic of",
-            "North Korea": "Korea, Democratic People's Republic of",
-            "Republic of Serbia": "Serbia",
-            "The Bahamas": "Bahamas",
-            "Netherlands": "The Netherlands",
-            "Vietnam": "Viet Nam",
-            "eSwatini": "Eswatini",
-            "Palestine": "Palestinian Territory",
-            "Russia": "Russian Federation",
-            "Iran": "Iran, Islamic Republic of",
-            "Syria": "Syrian Arab Republic",
-            "Czechia": "Czech Republic",
-            "Macedonia": "North Macedonia",
-            "United Kingdom": "United Kingdom",
-        }
-
-        # Build the final map keyed by NE name
-        mapped_count = 0
-        unmapped_ne_names = []
-        for ne_name in ne_names:
-            geonames_name_to_lookup = ne_name # Default assumption
-            # Check if an override exists for this NE name
-            if ne_name in ne_to_geonames_overrides:
-                geonames_name_to_lookup = ne_to_geonames_overrides[ne_name]
-
-            # Find the ISO code using the potentially overridden GeoNames name
-            iso_code = geonames_mapping.get(geonames_name_to_lookup)
-            if iso_code:
-                normalized_mapping[ne_name] = iso_code
-                mapped_count += 1
-            else:
-                # Log unmapped Natural Earth names only once for clarity
-                unmapped_ne_names.append(ne_name)
-
-        logging.info(f"Created {len(normalized_mapping)} final NE Country Name -> ISO code mappings after normalization.")
-        if unmapped_ne_names:
-             logging.warning(f"Could not map {len(unmapped_ne_names)} NE country names to ISO codes. Examples: {unmapped_ne_names[:10]}") # Log first 10 examples
-
-        return normalized_mapping # Return the result of normalization
-
-    except Exception as e:
-        # Catch errors during the mapping/normalization phase
-        st.error(f"Error during country name normalization/mapping creation: {e}")
-        logging.error("Error during country name normalization/mapping creation", exc_info=True)
-        return {} # Return empty on normalization error
-
+        st.error(f"CRITICAL: Failed to parse ISO codes from {COUNTRY_CODES_FILE}. Error: {e}")
+        logging.error(f"CRITICAL: Error parsing ISO codes from {COUNTRY_CODES_FILE}", exc_info=True)
+        return iso_codes
 
 # -----------------------------------------------------------------------------
 # 🔍 HIERARCHICAL LOOKUP FUNCTIONS (Accept data as arguments)
 # -----------------------------------------------------------------------------
-# ... (These functions remain the same as the previous correct version) ...
 
 def get_iso_code_for_country(ne_country_name: str, ne_name_to_iso_map: Dict[str, str]) -> Optional[str]:
     return ne_name_to_iso_map.get(ne_country_name)
