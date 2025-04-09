@@ -59,7 +59,23 @@ def load_country_code_mapping() -> dict:
     """Returns mapping from country name → ISO 2-letter code using countryInfo.txt"""
     if not os.path.exists(COUNTRY_CODES_FILE):
         return {}
+
     df = pd.read_csv(COUNTRY_CODES_FILE, sep='\t', comment='#')
+    
+    # --- Normalize known mismatches ---
+    overrides = {
+        "United States of America": "United States",
+        "Russia": "Russian Federation",
+        "South Korea": "Korea, Republic of",
+        "North Korea": "Korea, Democratic People's Republic of",
+        "Iran": "Iran, Islamic Republic of",
+        "Syria": "Syrian Arab Republic",
+        "Vietnam": "Viet Nam"
+    }
+
+    for user_label, canonical_label in overrides.items():
+        df.loc[df["Country"] == canonical_label, "Country"] = user_label
+
     return dict(zip(df["Country"], df["ISO"]))
 
 @st.cache_resource(show_spinner=False)
