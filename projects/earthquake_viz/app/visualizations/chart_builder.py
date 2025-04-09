@@ -154,3 +154,33 @@ def create_cumulative_time_series(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/c
     plt.close()
     return output_path
 
+def create_magnitude_depth_scatter(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/magnitude_vs_depth.gif", max_frames=60):
+    """Creates an animated scatter plot of Magnitude vs. Depth."""
+    df = df.dropna(subset=["Magnitude", "Depth (km)"])
+    df = df.sort_values("Magnitude")  # Optional: order by magnitude
+
+    x = df["Magnitude"].values
+    y = df["Depth (km)"].values
+
+    total = len(x)
+    step = max(1, total // max_frames)
+    frames = list(range(0, total, step))
+    interval = max(50, 10000 // len(frames))  # ms per frame
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    def update(i):
+        ax.clear()
+        ax.scatter(x[:i+1], y[:i+1], color='crimson', alpha=0.6, edgecolors='black')
+        ax.set_title("Magnitude vs. Depth")
+        ax.set_xlabel("Magnitude")
+        ax.set_ylabel("Depth (km)")
+        ax.set_xlim(0, 10)
+        ax.set_ylim(max(y) + 10, 0)  # Invert Y to show shallow at top
+        ax.grid(True)
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
