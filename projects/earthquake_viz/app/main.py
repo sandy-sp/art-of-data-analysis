@@ -132,6 +132,55 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
         st.image(ts_path, caption="Earthquakes Over Time Animation")
         st.image(loa_ani, caption="Location Animation")
 
+    # --- Animated Chart Section ---
+    st.markdown("---")
+    st.subheader("🎞️ Animated Visualizations")
+
+    tabs = st.tabs([
+        "Cumulative Timeline",
+        "Magnitude vs Depth",
+        "Map: Quake Spread",
+        "Shockwave Ripples",
+        "Spiral Timeline",
+        "Depth Strip Timeline"
+    ])
+
+    with tabs[0]:
+        st.markdown(f"**Cumulative Earthquakes Over Time in {country_name}**")
+        st.markdown("This animation shows the total number of earthquakes increasing over time, helping spot periods of high activity.")
+        gif_path = chart_builder.create_cumulative_time_series(df)
+        if gif_path: st.image(gif_path)
+
+    with tabs[1]:
+        st.markdown(f"**Magnitude vs. Depth for Earthquakes in {country_name}**")
+        st.markdown("This chart reveals how deep the earthquakes are relative to their magnitude. Shallow strong quakes often have more impact.")
+        gif_path = chart_builder.create_magnitude_depth_scatter(df)
+        if gif_path: st.image(gif_path)
+
+    with tabs[2]:
+        st.markdown(f"**Earthquake Spread Across {country_name}**")
+        st.markdown("Watch how earthquakes populate across the region. Each point represents an event, scaled by magnitude.")
+        gif_path = chart_builder.create_location_scatter_animation(df)
+        if gif_path: st.image(gif_path)
+
+    with tabs[3]:
+        st.markdown(f"**Seismic Shockwave Ripples in {country_name}**")
+        st.markdown("Each earthquake sends out a shockwave ripple to visualize energy release and timing.")
+        gif_path = chart_builder.create_shockwave_map_animation(df)
+        if gif_path: st.image(gif_path)
+
+    with tabs[4]:
+        st.markdown(f"**Spiral Timeline of Quakes in {country_name}**")
+        st.markdown("A polar spiral where angle = time, radius = magnitude, and color = depth — like seismic fingerprints.")
+        gif_path = chart_builder.create_spiral_timeline(df)
+        if gif_path: st.image(gif_path)
+
+    with tabs[5]:
+        st.markdown(f"**Depth Layered Timeline of Earthquakes in {country_name}**")
+        st.markdown("Categorizes quakes by depth — shallow, intermediate, deep — to analyze tectonic trends over time.")
+        gif_path = chart_builder.create_depth_strip_chart_animation(df)
+        if gif_path: st.image(gif_path)
+
 else:
     st.info("Select a country in the sidebar and click 'Fetch and Visualize Data' to load earthquake information.")  # Updated message
     st.markdown("---")
