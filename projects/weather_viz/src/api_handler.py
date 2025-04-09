@@ -13,23 +13,17 @@ def fetch_weather_data(latitude, longitude, hourly_variables, daily_variables=No
         params["daily"] = ",".join(daily_variables)
 
     try:
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        response = requests.get(base_url, params=params, timeout=10)
+        response.raise_for_status()  # Raise exception for HTTP errors
         data = response.json()
+
+        # Basic structure validation
+        if not data or "hourly" not in data or not data.get("hourly", {}).get("time"):
+            print("Warning: Incomplete or malformed response received from API.")
+            return None
+
         return data
+
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
         return None
-
-if __name__ == "__main__":
-    # This is just for testing the api_handler.py directly
-    latitude = 41.4993  # Cleveland, OH
-    longitude = -81.6944
-    hourly_vars = ["temperature_2m", "windspeed_10m", "precipitation", "winddirection_10m", "relativehumidity_2m"]
-    daily_vars = ["temperature_2m_max", "temperature_2m_min"]
-    weather_data = fetch_weather_data(latitude, longitude, hourly_vars, daily_vars)
-
-    if weather_data:
-        import json
-        print("Sample API Response (from api_handler.py):")
-        print(json.dumps(weather_data, indent=4))
