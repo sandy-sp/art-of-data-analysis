@@ -47,13 +47,17 @@ def load_world_shapefile(shapefile_path: str = WORLD_SHP_PATH) -> Tuple[Optional
         logging.error(f"Error loading country shapefile: {e}", exc_info=True)
         return None, None
 
-
 # Pass world_gdf explicitly if needed for normalization logic
 @st.cache_resource(show_spinner="Loading country code mappings...")
-def load_country_name_to_iso_mapping(world_gdf: Optional[gpd.GeoDataFrame]) -> Dict[str, str]:
+# CHANGE HERE: Add underscore to the world_gdf parameter name
+def load_country_name_to_iso_mapping(_world_gdf: Optional[gpd.GeoDataFrame]) -> Dict[str, str]:
     """Loads mapping from Natural Earth country name to ISO code."""
-    # ... (keep the inside parsing logic the same, BUT ensure normalization uses the passed world_gdf) ...
     mapping = {}
+    # Check if the argument (now _world_gdf) is None before using it
+    if _world_gdf is None or _world_gdf.empty:
+         logging.warning("World GDF not provided for country name normalization. Cannot create mapping.")
+         return mapping # Return empty if GDF is missing
+
     if not os.path.exists(COUNTRY_CODES_FILE):
         st.warning(f"GeoNames country info file not found: {COUNTRY_CODES_FILE}")
         logging.warning(f"GeoNames country info file not found: {COUNTRY_CODES_FILE}")
@@ -69,48 +73,42 @@ def load_country_name_to_iso_mapping(world_gdf: Optional[gpd.GeoDataFrame]) -> D
 
         # Normalization logic requires world_gdf
         normalized_mapping = {}
-        if world_gdf is not None and not world_gdf.empty:
-            ne_names = set(world_gdf['NE_COUNTRY_NAME'])
-            # Define overrides mapping NE name -> GeoNames name
-            ne_to_geonames_overrides = {
-                "United States": "United States",
-                "Russian Federation": "Russia",
-                "Republic of Korea": "South Korea",
-                "Democratic People's Republic of Korea": "North Korea",
-                "Iran (Islamic Republic of)": "Iran",
-                "Syrian Arab Republic": "Syria",
-                "Viet Nam": "Vietnam",
-                "Czechia": "Czech Republic",
-                 "Republic of Serbia": "Serbia",
-                # Add more overrides as identified
-            }
-            # Build the final map keyed by NE name
-            for ne_name in ne_names:
-                # Direct match in overrides?
-                if ne_name in ne_to_geonames_overrides:
-                     geonames_country = ne_to_geonames_overrides[ne_name]
-                     iso_code = geonames_mapping.get(geonames_country)
-                     if iso_code:
-                          normalized_mapping[ne_name] = iso_code
-                     # else: log missing geonames name from override
-                # Direct match in geonames_mapping keys?
-                elif ne_name in geonames_mapping:
-                     normalized_mapping[ne_name] = geonames_mapping[ne_name]
-                # else: log NE name not mapped
+        # Use the parameter name _world_gdf internally now
+        ne_names = set(_world_gdf['NE_COUNTRY_NAME'])
+        # Define overrides mapping NE name -> GeoNames name
+        ne_to_geonames_overrides = {
+            "United States": "United States",
+            "Russian Federation": "Russia",
+            "Republic of Korea": "South Korea",
+            "Democratic People's Republic of Korea": "North Korea",
+            "Iran (Islamic Republic of)": "Iran",
+            "Syrian Arab Republic": "Syria",
+            "Viet Nam": "Vietnam",
+            "Czechia": "Czech Republic",
+            "Republic of Serbia": "Serbia",
+            # Add more overrides as identified
+        }
+        # Build the final map keyed by NE name
+        for ne_name in ne_names:
+            # Direct match in overrides?
+            if ne_name in ne_to_geonames_overrides:
+                 geonames_country = ne_to_geonames_overrides[ne_name]
+                 iso_code = geonames_mapping.get(geonames_country)
+                 if iso_code:
+                      normalized_mapping[ne_name] = iso_code
+                 # else: log missing geonames name from override
+            # Direct match in geonames_mapping keys?
+            elif ne_name in geonames_mapping:
+                 normalized_mapping[ne_name] = geonames_mapping[ne_name]
+            # else: log NE name not mapped
 
-            logging.info(f"Created {len(normalized_mapping)} normalized NE Country Name -> ISO code mappings.")
-        else:
-             logging.warning("World GDF not provided for country name normalization. Mapping may be incomplete.")
-             # Fallback: return raw geonames mapping? Or empty? Prefer empty if normalization is essential.
-             # return geonames_mapping
-
+        logging.info(f"Created {len(normalized_mapping)} normalized NE Country Name -> ISO code mappings.")
         return normalized_mapping
 
     except Exception as e:
         st.error(f"Error loading country code mapping: {e}")
         logging.error(f"Error loading country code mapping: {e}", exc_info=True)
         return {}
-
 
 @st.cache_resource(show_spinner="Loading admin level 1 data...")
 def load_admin1_data() -> Dict[str, Dict[str, str]]:
