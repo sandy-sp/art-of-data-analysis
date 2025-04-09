@@ -118,21 +118,19 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
 
         else:
             st.error("❌ Failed to fetch data from the USGS API.")
-        
 
-        st.subheader("📊 Earthquake Charts")
+    st.subheader("📊 Animated Charts")
 
-        with st.spinner("Generating charts..."):
-            mag_fig = chart_builder.create_magnitude_histogram(df)
-            depth_fig = chart_builder.create_depth_histogram(df)
-            ts_fig = chart_builder.create_time_series(df)
+    with st.spinner("Rendering animated charts..."):
+        mag_path = chart_builder.create_magnitude_histogram_animation(df)
+        depth_path = chart_builder.create_depth_histogram_animation(df)
+        ts_path = chart_builder.create_time_series_animation(df)
+        loa_ani = chart_builder.create_location_animation(df)
 
-            if mag_fig:
-                st.pyplot(mag_fig)
-            if depth_fig:
-                st.pyplot(depth_fig)
-            if ts_fig:
-                st.pyplot(ts_fig)
+        st.image(mag_path, caption="Magnitude Histogram Animation")
+        st.image(depth_path, caption="Depth Histogram Animation")
+        st.image(ts_path, caption="Earthquakes Over Time Animation")
+        st.image(loa_ani, caption="Location Animation")
 
 else:
     st.info("Select a country in the sidebar and click 'Fetch and Visualize Data' to load earthquake information.")  # Updated message
