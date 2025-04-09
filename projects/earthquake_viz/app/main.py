@@ -55,6 +55,13 @@ def load_initial_data():
         "cities_df": cities_df
     }
 
+def load_initial_data():
+    """Loads all necessary geographic data after page config."""
+    world_gdf, ne_country_list = load_world_shapefile()
+    # This call remains the same - passes world_gdf to the function
+    ne_name_to_iso_map = load_country_name_to_iso_mapping(world_gdf)
+    admin1_data = load_admin1_data()
+
 # --- Main App Logic ---
 st.title("🌍 USGS Earthquake Data Visualizer")
 st.markdown("Filter earthquake data dynamically by Country, State/Province, or City.")
