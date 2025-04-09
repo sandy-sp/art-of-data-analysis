@@ -8,7 +8,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
 # --- Output Directory ---
-OUTPUT_DIR = "temp_charts"
+OUTPUT_DIR = "data/output_charts"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Core Animation Helper ---
