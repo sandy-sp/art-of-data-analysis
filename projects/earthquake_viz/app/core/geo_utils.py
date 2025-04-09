@@ -11,6 +11,8 @@ WORLD_SHP_PATH = "data/shapefiles/ne_110m_admin_0_countries/ne_110m_admin_0_coun
 ADMIN1_CODES_FILE = "data/geonames/admin1CodesASCII.txt"
 CITY_FILE_PATH = "data/geonames/cities500.txt"
 COUNTRY_CODES_FILE = "data/geonames/countryInfo.txt" # Make sure this file exists [cite: 1]
+# --- Add path for Admin 1 shapefile ---
+ADMIN1_SHP_PATH = "data/shapefiles/ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -130,6 +132,28 @@ def load_geonames_iso_codes() -> Set[str]:
         logging.error(f"CRITICAL: Error parsing ISO codes from {COUNTRY_CODES_FILE}", exc_info=True)
         return iso_codes
 
+# --- NEW: Function to load Admin 1 shapefile ---
+@st.cache_resource(show_spinner="Loading state/province boundaries...")
+def load_admin1_shapefile(shapefile_path: str = ADMIN1_SHP_PATH) -> Optional[gpd.GeoDataFrame]:
+    if not os.path.exists(shapefile_path):
+        st.warning(f"Admin 1 shapefile not found: {shapefile_path}. State/Province map zooming disabled.")
+        logging.warning(f"Admin 1 shapefile not found: {shapefile_path}")
+        return None
+    try:
+        gdf = gpd.read_file(shapefile_path)
+        logging.info(f"Loaded Admin 1 shapefile with {len(gdf)} features. Columns: {gdf.columns.tolist()}")
+        iso_col = 'iso_a2' if 'iso_a2' in gdf.columns else None
+        name_col = 'name' if 'name' in gdf.columns else None
+        if not iso_col or not name_col:
+            st.warning(f"Admin 1 shapefile missing required columns (ISO A2 or Name). State zooming might fail.")
+            logging.warning(f"Admin 1 shapefile missing required columns. ISO Col: {iso_col}, Name Col: {name_col}")
+            return gdf
+        return gdf[['geometry', iso_col, name_col]].rename(columns={iso_col: 'ISO_A2', name_col: 'ADMIN1_NAME'})
+    except Exception as e:
+        st.error(f"Error loading Admin 1 shapefile: {e}")
+        logging.error(f"Error loading Admin 1 shapefile: {e}", exc_info=True)
+        return None
+
 # -----------------------------------------------------------------------------
 # 🔍 HIERARCHICAL LOOKUP FUNCTIONS (Accept data as arguments)
 # -----------------------------------------------------------------------------
@@ -183,4 +207,30 @@ def get_country_bounds(country_name: str, world_gdf: Optional[gpd.GeoDataFrame])
         return [bounds[0], bounds[1], bounds[2], bounds[3]]
     except Exception as e:
         logging.error(f"Error getting bounds for country '{country_name}': {e}", exc_info=True)
+        return None
+
+# --- NEW: Function to get State/Province bounds ---
+def get_state_bounds(country_iso_code: str, state_name: str, admin1_gdf: Optional[gpd.GeoDataFrame]) -> Optional[List[float]]:
+    if admin1_gdf is None or admin1_gdf.empty:
+        logging.warning("Admin 1 GeoDataFrame is not available for getting state bounds.")
+        return None
+    if 'ISO_A2' not in admin1_gdf.columns or 'ADMIN1_NAME' not in admin1_gdf.columns:
+        logging.warning(f"Required columns ('ISO_A2', 'ADMIN1_NAME') not found in Admin 1 GDF. Columns: {admin1_gdf.columns}")
+        return None
+    match = admin1_gdf[
+        (admin1_gdf['ISO_A2'].astype(str) == str(country_iso_code)) &
+        (admin1_gdf['ADMIN1_NAME'].astype(str).str.lower() == str(state_name).lower())
+    ]
+    if match.empty:
+        logging.warning(f"Could not find exact match for state: '{state_name}' in country '{country_iso_code}' within Admin 1 GDF.")
+        return None
+    if len(match) > 1:
+        logging.warning(f"Found multiple boundary matches for state '{state_name}', country '{country_iso_code}'. Using the first one.")
+    try:
+        geometry = match.iloc[0].geometry
+        bounds = geometry.bounds
+        logging.info(f"Found bounds for state '{state_name}', country '{country_iso_code}': {bounds}")
+        return [bounds[0], bounds[1], bounds[2], bounds[3]]
+    except Exception as e:
+        logging.error(f"Error getting bounds for state '{state_name}', country '{country_iso_code}': {e}", exc_info=True)
         return None
