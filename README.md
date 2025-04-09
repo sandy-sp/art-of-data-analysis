@@ -32,7 +32,7 @@ streamlit run app.py
 
 ---
 
-### 2. 🌍 USGS Earthquake Visualizer
+### 2. 🌍 USGS Earthquake Visualizer ([Live App](https://art-of-data-analysis-earthquake-viz.streamlit.app/))
 A geographic data app that uses the **USGS Earthquake API** to map recent earthquakes within country borders. Key features:
 
 - Country-specific filtering using GeoPandas + Natural Earth shapefiles
@@ -40,23 +40,24 @@ A geographic data app that uses the **USGS Earthquake API** to map recent earthq
   - Magnitude-based marker size
   - Depth-based marker color (legend included)
   - Marker clustering for performance
-- Advanced filtering: magnitude, date, record limits
+- Animated chart visualizations (e.g., histograms, time series, spiral timelines)
 - CSV export of filtered dataset
 - Streamlit sidebar UI with caching optimizations
 
-**Stack**: Python 3.9+, Streamlit, GeoPandas, Folium, Requests, Pandas
+**Stack**: Python 3.9+, Streamlit, GeoPandas, Folium, Requests, Pandas, Matplotlib, Seaborn
 
 **Run Locally**:
 ```bash
-git clone <your-repository-url>
-cd earthquake-visualizer
+git clone https://github.com/sandy-sp/art-of-data-analysis.git
+cd projects/earthquake_viz
 python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run app/main.py
 ```
 
-Refer to the project README for shapefile download and setup instructions.
+> ✉️ Download Natural Earth shapefiles from:
+> https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/
 
 ---
 
