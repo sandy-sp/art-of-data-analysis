@@ -4,49 +4,62 @@ import matplotlib.animation as animation
 from datetime import datetime
 import os
 
+# --- Output Directory ---
 OUTPUT_DIR = "temp_charts"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# --- Core Animation Helper ---
+def get_dynamic_frames(data_len, max_frames=60):
+    step = max(1, data_len // max_frames)
+    frames = list(range(0, data_len, step))
+    interval = max(50, 10000 // len(frames))  # ms/frame, ~10 sec total
+    return frames, interval
+
+# --- Magnitude Histogram ---
 def create_magnitude_histogram_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/magnitude.gif"):
     df = df.dropna(subset=["Magnitude"])
     mags = df["Magnitude"].sort_values().values
+    frames, interval = get_dynamic_frames(len(mags))
+
     fig, ax = plt.subplots()
     bins = range(0, 11)
 
     def update(i):
         ax.clear()
-        current = mags[:i + 1]
-        ax.hist(current, bins=bins, color='skyblue', edgecolor='black')
+        ax.hist(mags[:i+1], bins=bins, color='skyblue', edgecolor='black')
         ax.set_title("Earthquake Magnitude Histogram")
         ax.set_xlabel("Magnitude")
         ax.set_ylabel("Count")
         ax.set_xlim(0, 10)
 
-    ani = animation.FuncAnimation(fig, update, frames=len(mags), interval=100, repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
     ani.save(output_path, writer='pillow')
     plt.close()
     return output_path
 
+# --- Depth Histogram ---
 def create_depth_histogram_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/depth.gif"):
     df = df.dropna(subset=["Depth (km)"])
     depths = df["Depth (km)"].sort_values().values
+    frames, interval = get_dynamic_frames(len(depths))
+
     fig, ax = plt.subplots()
     bins = range(0, 700, 50)
 
     def update(i):
         ax.clear()
-        current = depths[:i + 1]
-        ax.hist(current, bins=bins, color='salmon', edgecolor='black')
+        ax.hist(depths[:i+1], bins=bins, color='salmon', edgecolor='black')
         ax.set_title("Earthquake Depth Histogram")
         ax.set_xlabel("Depth (km)")
         ax.set_ylabel("Count")
         ax.set_xlim(0, 700)
 
-    ani = animation.FuncAnimation(fig, update, frames=len(depths), interval=100, repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
     ani.save(output_path, writer='pillow')
     plt.close()
     return output_path
 
+# --- Time Series ---
 def create_time_series_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/timeseries.gif"):
     if "Time" not in df.columns:
         return None
@@ -56,8 +69,13 @@ def create_time_series_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/ti
     df["Date"] = df["Parsed_Time"].dt.date
     daily_counts = df.groupby("Date").size().sort_index()
 
+    if daily_counts.empty:
+        return None
+
     dates = daily_counts.index
     values = daily_counts.values
+    frames, interval = get_dynamic_frames(len(dates))
+
     fig, ax = plt.subplots()
 
     def update(i):
@@ -70,33 +88,33 @@ def create_time_series_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/ti
         ax.set_xlim(dates[0], dates[-1])
         ax.set_ylim(0, max(values) + 5)
 
-    ani = animation.FuncAnimation(fig, update, frames=len(dates), interval=300, repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
     ani.save(output_path, writer='pillow')
     plt.close()
     return output_path
 
+# --- Location Scatter Plot ---
 def create_location_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/locations.gif"):
     if "Latitude" not in df.columns or "Longitude" not in df.columns:
         return None
 
     df = df.dropna(subset=["Latitude", "Longitude"])
+    frames, interval = get_dynamic_frames(len(df))
+
     fig, ax = plt.subplots()
-    ax.set_title("Earthquake Locations")
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
-    ax.set_xlim(df["Longitude"].min() - 5, df["Longitude"].max() + 5)
-    ax.set_ylim(df["Latitude"].min() - 5, df["Latitude"].max() + 5)
+    lat_range = (df["Latitude"].min() - 5, df["Latitude"].max() + 5)
+    lon_range = (df["Longitude"].min() - 5, df["Longitude"].max() + 5)
 
     def update(i):
         ax.clear()
         ax.set_title("Earthquake Locations")
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
+        ax.set_xlim(*lon_range)
+        ax.set_ylim(*lat_range)
         ax.scatter(df["Longitude"][:i+1], df["Latitude"][:i+1], color='orange', alpha=0.6)
-        ax.set_xlim(df["Longitude"].min() - 5, df["Longitude"].max() + 5)
-        ax.set_ylim(df["Latitude"].min() - 5, df["Latitude"].max() + 5)
 
-    ani = animation.FuncAnimation(fig, update, frames=len(df), interval=100, repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
     ani.save(output_path, writer='pillow')
     plt.close()
     return output_path
