@@ -59,24 +59,46 @@ if st.sidebar.button("Fetch and Visualize Data", key="fetch_button", help="Click
         "min_magnitude": user_inputs["min_magnitude"],
         "limit": user_inputs["limit"],
     }
-    bounding_box = None
-    execute_fetch = False
+
     country_name = user_inputs.get("country_name")
+    state_name = user_inputs.get("state_name")
+    city_name = user_inputs.get("city_name")
+    radius_km = user_inputs.get("radius_km")
+    country_code = user_inputs.get("country_code")
+    admin1_code = user_inputs.get("admin1_code")
 
-    # Validate country input and get bounds
+    execute_fetch = False
+    map_center_bounds = None  # Used to center the map
+
     if not country_name:
-        st.error("Please select a country from the dropdown list in the sidebar.")  # Updated error message
+        st.error("Please select a country from the dropdown list in the sidebar.")
     else:
-        logging.info(f"Attempting to find bounds for country: {country_name}")
-        with st.spinner(f"Looking up boundaries for {country_name}..."):
-            bounding_box = geo_utils.get_country_bounds(country_name, world_gdf)
-
-        if bounding_box:
-            api_params["bounding_box"] = bounding_box
-            logging.info(f"Using bounds for {country_name}: {bounding_box}")
-            execute_fetch = True
+        # CITY FILTER
+        if city_name and country_code and admin1_code and radius_km:
+            logging.info(f"City filter selected: {city_name}, {state_name}")
+            coords = get_city_coordinates(country_code, admin1_code, city_name)
+            if coords:
+                api_params["latitude"] = coords[0]
+                api_params["longitude"] = coords[1]
+                api_params["max_radius_km"] = radius_km
+                map_center_bounds = [coords[1] - 2, coords[0] - 2, coords[1] + 2, coords[0] + 2]
+                logging.info(f"Using city radius search: {coords} ± {radius_km} km")
+                execute_fetch = True
+            else:
+                st.error(f"Could not determine coordinates for city: {city_name}")
+        # COUNTRY or STATE FILTER
         else:
-            st.error(f"Could not find boundaries for selected country '{country_name}'.")
+            logging.info(f"Using fallback bounding box for: {country_name}")
+            with st.spinner(f"Looking up boundaries for {country_name}..."):
+                map_center_bounds = geo_utils.get_country_bounds(country_name, world_gdf)
+
+            if map_center_bounds:
+                api_params["bounding_box"] = map_center_bounds
+                logging.info(f"Using bounding box for {country_name}: {map_center_bounds}")
+                execute_fetch = True
+            else:
+                st.error(f"Could not determine boundaries for: {country_name}")
+
 
     # Execute API call and visualization
     if execute_fetch:
