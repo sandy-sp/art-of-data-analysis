@@ -32,14 +32,44 @@ if world_gdf is None or country_list is None:  # Check both parts
     st.error("Application cannot start because the world boundaries data failed to load. Please check the path and file integrity.")
     st.stop()
 
-# Sidebar controls
-user_inputs = controls.display_sidebar_controls(country_list)  # Pass country_list to controls function
-if user_inputs["city_name"] and user_inputs["country_code"] and user_inputs["admin1_code"]:
-    coords = get_city_coordinates(
-        user_inputs["country_code"], user_inputs["admin1_code"], user_inputs["city_name"]
-    )
-    if coords:
-        st.info(f"City center: {coords}, Radius: {user_inputs['radius_km']} km")
+user_inputs = controls.display_sidebar_controls(country_list)
+
+# --- DEBUG UI TEST: Display raw values and force State/City dropdowns in main UI ---
+st.markdown("---")
+st.subheader("🧪 Debug: Current User Inputs")
+
+st.json(user_inputs)
+
+# Check country code resolution
+if not user_inputs.get("country_code"):
+    st.warning("⚠️ Country code not resolved from selected country name.")
+
+# Force state dropdown from admin1_code_map if country_code exists
+if user_inputs.get("country_code"):
+    country_code = user_inputs["country_code"]
+    admin1_map = geo_utils.load_admin1_code_mapping()
+    matching_states = sorted([
+        name for (code, name) in admin1_map.keys() if code == country_code
+    ])
+
+    if matching_states:
+        st.subheader("🏛️ Test State Selection")
+        selected_state = st.selectbox("Select a State (Main UI test)", matching_states)
+        state_code = admin1_map.get((country_code, selected_state))
+        st.write("Resolved Admin1 Code:", state_code)
+
+        # Force city dropdown
+        from app.core.geo_utils import get_cities_by_admin1
+        cities = get_cities_by_admin1(country_code, state_code)
+        if cities:
+            st.subheader("🏙️ Test City Selection")
+            selected_city = st.selectbox("Select a City (Main UI test)", cities)
+            st.write("Selected City:", selected_city)
+        else:
+            st.info("No cities found for selected state.")
+    else:
+        st.info("No states found for selected country code.")
+
 
 # Caching wrapper function
 @st.cache_data(ttl=900, show_spinner=False)
