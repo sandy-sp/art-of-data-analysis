@@ -184,3 +184,42 @@ def create_magnitude_depth_scatter(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/
     plt.close()
     return output_path
 
+def create_location_scatter_animation(df: pd.DataFrame, output_path=f"{OUTPUT_DIR}/quake_locations.gif", max_frames=60):
+    """Creates an animated location scatter map using Latitude and Longitude."""
+    df = df.dropna(subset=["Latitude", "Longitude", "Magnitude"])
+    df = df.sort_values("Time")  # Ensure chronological order if needed
+
+    lat = df["Latitude"].values
+    lon = df["Longitude"].values
+    mag = df["Magnitude"].values
+
+    total = len(df)
+    step = max(1, total // max_frames)
+    frames = list(range(0, total, step))
+    interval = max(50, 10000 // len(frames))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    lat_pad = 2
+    lon_pad = 2
+    lat_min, lat_max = lat.min() - lat_pad, lat.max() + lat_pad
+    lon_min, lon_max = lon.min() - lon_pad, lon.max() + lon_pad
+
+    def update(i):
+        ax.clear()
+        ax.set_title("Earthquake Locations Over Time")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_xlim(lon_min, lon_max)
+        ax.set_ylim(lat_min, lat_max)
+        ax.grid(True)
+
+        ax.scatter(lon[:i+1], lat[:i+1], 
+                   s=mag[:i+1]**2,  # Magnitude as size
+                   c='orange', alpha=0.6, edgecolors='black')
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=interval, repeat=False)
+    ani.save(output_path, writer='pillow')
+    plt.close()
+    return output_path
+
