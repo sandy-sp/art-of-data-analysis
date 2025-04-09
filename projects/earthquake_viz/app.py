@@ -1,12 +1,9 @@
+# Redirect Streamlit to the actual entry point
 import os
-import subprocess
+import sys
 
-# Define the path to the main script
-main_script_path = os.path.join(os.path.dirname(__file__), 'app', 'main.py')
+# Ensure app folder is in the path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "app")))
 
-# Check if the file exists
-if not os.path.isfile(main_script_path):
-    raise FileNotFoundError(f"main.py not found at {main_script_path}")
-
-# Run the main script with Streamlit
-subprocess.run(['streamlit', 'run', main_script_path], check=True)
+# Run the actual Streamlit app
+import main
