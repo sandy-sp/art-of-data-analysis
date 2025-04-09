@@ -38,29 +38,30 @@ import streamlit.components.v1 as components
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- Load Data Function ---
-# Use caching here if desired, or rely on caching within the load functions themselves
-# @st.cache_resource # Cache the entire loaded data dictionary
+# --- Load Data Function (with robust error handling) ---
 def load_initial_data():
     """Loads all necessary geographic data after page config."""
-    world_gdf, ne_country_list = load_world_shapefile()
-    ne_name_to_iso_map = load_country_name_to_iso_mapping(world_gdf) # Pass world_gdf if needed for normalization
-    admin1_data = load_admin1_data()
-    cities_df = load_geonames_cities()
-    return {
-        "world_gdf": world_gdf,
-        "ne_country_list": ne_country_list,
-        "ne_name_to_iso_map": ne_name_to_iso_map,
-        "admin1_data": admin1_data,
-        "cities_df": cities_df
-    }
+    try:
+        world_gdf, ne_country_list = load_world_shapefile()
+        if world_gdf is None or ne_country_list is None:
+            logging.error("load_world_shapefile returned None. Cannot proceed.")
+            return None
 
-def load_initial_data():
-    """Loads all necessary geographic data after page config."""
-    world_gdf, ne_country_list = load_world_shapefile()
-    # This call remains the same - passes world_gdf to the function
-    ne_name_to_iso_map = load_country_name_to_iso_mapping(world_gdf)
-    admin1_data = load_admin1_data()
+        ne_name_to_iso_map = load_country_name_to_iso_mapping(world_gdf)
+        admin1_data = load_admin1_data()
+        cities_df = load_geonames_cities()
+
+        return {
+            "world_gdf": world_gdf,
+            "ne_country_list": ne_country_list,
+            "ne_name_to_iso_map": ne_name_to_iso_map,
+            "admin1_data": admin1_data,
+            "cities_df": cities_df
+        }
+    except Exception as e:
+        st.error(f"An unexpected error occurred during initial data loading: {e}")
+        logging.error("Unexpected error in load_initial_data sequence", exc_info=True)
+        return None
 
 # --- Main App Logic ---
 st.title("🌍 USGS Earthquake Data Visualizer")
@@ -70,10 +71,28 @@ st.markdown("---")
 # Load data *after* setting page config
 geo_data = load_initial_data()
 
-# Check if essential data loaded correctly
-if geo_data["world_gdf"] is None or geo_data["ne_country_list"] is None:
-    st.error("Application cannot start: Failed to load world boundaries data.")
-    st.stop() # Stop execution if core data is missing
+# --- Explicit Check for None returned by load_initial_data ---
+if geo_data is None:
+    st.error("Application initialization failed: Could not load essential geographic data. Please check logs and file paths.")
+    logging.error("load_initial_data returned None. Stopping application.")
+    st.stop()
+
+# --- Safely Check Essential Components *within* the geo_data dictionary ---
+logging.info(f"Checking loaded geo_data dictionary. Type: {type(geo_data)}")
+world_gdf_value = geo_data.get("world_gdf")
+country_list_value = geo_data.get("ne_country_list")
+
+if world_gdf_value is None:
+    st.error("Application initialization failed: 'world_gdf' is None within geo_data.")
+    logging.error("'world_gdf' value is None in geo_data. Stopping.")
+    st.stop()
+
+if country_list_value is None:
+    st.error("Application initialization failed: 'ne_country_list' is None within geo_data.")
+    logging.error("'ne_country_list' value is None in geo_data. Stopping.")
+    st.stop()
+
+logging.info("Essential geo_data components ('world_gdf', 'ne_country_list') checks passed.")
 
 # Display controls and get user inputs - Pass necessary loaded data to controls
 user_inputs = controls.display_sidebar_controls(geo_data) # Pass geo_data dict
