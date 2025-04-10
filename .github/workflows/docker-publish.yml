@@ -1,0 +1,89 @@
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main  # Or your main branch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Login to GitHub Packages
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find projects with Dockerfiles
+        id: find-projects
+        run: |
+          echo "projects=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \; -print | jq -R -s -c 'split(\"\n\")[:-1]')" >> $GITHUB_OUTPUT
+
+      - name: Extract project titles and build/push Docker images
+        if: steps.find-projects.outputs.projects != '[]'
+        run: |
+          PROJECTS=$(echo ${{ steps.find-projects.outputs.projects }} | jq -r .[])
+          echo "Projects found: $PROJECTS"
+          for PROJECT in $PROJECTS; do
+            echo "Processing project: $PROJECT"
+
+            # Extract title from README.md
+            README_PATH="${PROJECT}/readme.md"
+            if [ -f "$README_PATH" ]; then
+              PROJECT_TITLE=$(grep -m 1 '^#' "$README_PATH" | sed -e 's/^# *//g')
+              # Sanitize the title for use in Docker image name (replace spaces and special chars with hyphens)
+              SANITIZED_TITLE=$(echo "$PROJECT_TITLE" | tr ' ' - | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+              echo "Project title: $PROJECT_TITLE (Sanitized: $SANITIZED_TITLE)"
+              # If title is empty or sanitization resulted in empty string, use folder name as fallback
+              if [ -z "$SANITIZED_TITLE" ]; then
+                SANITIZED_TITLE=$(basename "$PROJECT")
+                echo "Using folder name as fallback: $SANITIZED_TITLE"
+              fi
+            else
+              echo "No README found for $PROJECT. Using folder name."
+              SANITIZED_TITLE=$(basename "$PROJECT")
+            fi
+
+            IMAGE_NAME_DOCKERHUB="<docker_hub_username>/${SANITIZED_TITLE}" # Replace <docker_hub_username>
+            IMAGE_NAME_GHCR="ghcr.io/<github_username>/<repository_name>/${SANITIZED_TITLE}" # Replace <github_username> and <repository_name>
+            TAG="latest" # Or generate a dynamic tag
+
+            # Build and push to Docker Hub
+            docker build -t ${IMAGE_NAME_DOCKERHUB}:${TAG} "${PROJECT}"
+            docker push ${IMAGE_NAME_DOCKERHUB}:${TAG}
+
+            # Build and push to GitHub Packages (you could potentially skip the build if the previous build was successful and just tag and push)
+            docker tag ${IMAGE_NAME_DOCKERHUB}:${TAG} ${IMAGE_NAME_GHCR}:${TAG}
+            docker push ${IMAGE_NAME_GHCR}:${TAG}
+          done
+
+      - name: Publish READMEs (Conceptual - requires GitHub API calls)
+        if: steps.find-projects.outputs.projects != '[]'
+        run: |
+          # Implement logic here to iterate through projects,
+          # find README.md, and use the GitHub API or a tool like `gh` to create a release or update project metadata with the README content.
+          echo "Publishing READMEs..."
+          PROJECTS=$(echo ${{ steps.find-projects.outputs.projects }} | jq -r .[])
+          for PROJECT in $PROJECTS; do
+            echo "Processing README for $PROJECT"
+            README_PATH="${PROJECT}/readme.md"
+            if [ -f "$README_PATH" ]; then
+              echo "README found at $README_PATH"
+              # Add logic to publish README content using GitHub API or `gh`
+            else
+              echo "No README found for $PROJECT"
+            fi
+          done
