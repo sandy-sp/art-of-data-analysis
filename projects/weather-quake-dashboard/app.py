@@ -3,7 +3,7 @@ from src.components.sidebar import render_sidebar
 from src.components.region_selector import render_region_selector
 from src.api.open_meteo_api import fetch_historical_weather
 from src.api.usgs_earthquake_api import fetch_earthquake_data
-from src.pages import map_view, time_series, correlations
+from src.pages import map_view, time_series, correlations, quake_3d
 
 st.set_page_config(
     page_title="🌍 Weather & Earthquake Insight Dashboard",
@@ -56,7 +56,7 @@ if 'weather_data' in st.session_state and 'quake_data' in st.session_state:
         "inputs": user_inputs
     }
 
-    tabs = st.tabs(["🌍 Map View", "📈 Time Series", "🔍 Correlations"])
+    tabs = st.tabs(["🌍 Map View", "📈 Time Series", "🔍 Correlations", "🌐 3D Quake View"])
 
     with tabs[0]:
         map_view.display_map(data_bundle)
@@ -66,5 +66,8 @@ if 'weather_data' in st.session_state and 'quake_data' in st.session_state:
 
     with tabs[2]:
         correlations.display_correlation_analysis(data_bundle)
+
+    with tabs[3]:
+        quake_3d.display_3d_quake_map(data_bundle)
 else:
     st.info("👈 Use the sidebar to select a region and click 'Fetch & Analyze' to begin.")
