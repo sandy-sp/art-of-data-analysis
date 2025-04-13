@@ -1,0 +1,33 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Streamlit cache & logs
+.streamlit/config.toml
+.streamlit/secrets.toml
+
+# Jupyter & VSCode artifacts
+.ipynb_checkpoints/
+.vscode/
+
+# Pytest cache
+.pytest_cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Output artifacts
+*.log
+*.zip
+data/
