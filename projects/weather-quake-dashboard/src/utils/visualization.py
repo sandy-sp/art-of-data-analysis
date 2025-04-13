@@ -81,3 +81,25 @@ def plot_magnitude_histogram(df: pd.DataFrame):
     )
     fig.update_layout(bargap=0.1)
     return fig
+
+def plot_3d_quake_depth(df: pd.DataFrame):
+    if df.empty or not all(col in df.columns for col in ['Latitude', 'Longitude', 'Depth_km', 'Magnitude']):
+        return None
+
+    fig = px.scatter_3d(
+        df,
+        x='Longitude',
+        y='Latitude',
+        z='Depth_km',
+        color='Magnitude',
+        title='3D View of Earthquake Depths',
+        labels={
+            'Depth_km': 'Depth (km)',
+            'Latitude': 'Latitude',
+            'Longitude': 'Longitude',
+            'Magnitude': 'Magnitude'
+        },
+        height=600,
+    )
+    fig.update_traces(marker=dict(size=5, opacity=0.7))
+    return fig
