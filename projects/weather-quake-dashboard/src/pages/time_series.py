@@ -1,5 +1,9 @@
 import streamlit as st
-from src.utils.visualization import plot_temperature_humidity, plot_earthquake_frequency
+from src.utils.visualization import (
+    plot_temperature_humidity,
+    plot_earthquake_frequency,
+    plot_magnitude_histogram
+)
 from src.utils.data_processing import summarize_earthquake_stats
 
 
@@ -37,3 +41,10 @@ def display_timeseries(data_bundle):
         st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("No data to plot earthquake frequency.")
+
+    st.markdown("### 📐 Magnitude Distribution")
+    fig3 = plot_magnitude_histogram(quake_df)
+    if fig3:
+        st.plotly_chart(fig3, use_container_width=True)
+    else:
+        st.info("No data to plot magnitude histogram.")
