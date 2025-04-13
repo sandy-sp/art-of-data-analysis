@@ -2,34 +2,32 @@ import streamlit as st
 import folium
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
+from geopy.geocoders import Nominatim
 import requests
 import json
 
 TECTONIC_URL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
 
-# Simple static mapping for demo (extend as needed)
-COUNTRY_CENTERS = {
-    "United States": (37.0902, -95.7129, 4),
-    "Japan": (36.2048, 138.2529, 5),
-    "Chile": (-35.6751, -71.5430, 5),
-    "Turkey": (38.9637, 35.2433, 5),
-    "Indonesia": (-0.7893, 113.9213, 4),
-    "India": (20.5937, 78.9629, 4),
-    "Mexico": (23.6345, -102.5528, 5),
-    "Philippines": (13.4105, 122.5607, 5),
-}
-
+def geocode_country_center(name: str):
+    try:
+        geolocator = Nominatim(user_agent="quake-weather-app")
+        location = geolocator.geocode(name, exactly_one=True, timeout=10)
+        if location:
+            return location.latitude, location.longitude
+    except Exception as e:
+        st.sidebar.error(f"Geocoding failed: {e}")
+    return 10, 0  # fallback to global center
 
 def render_region_selector():
     st.sidebar.subheader("🌍 Select Region via Tectonic Plates")
 
-    country = st.sidebar.selectbox("Select Country", list(COUNTRY_CENTERS.keys()))
-    lat, lon, zoom = COUNTRY_CENTERS.get(country, (10, 0, 2))
+    country = st.sidebar.text_input("Enter Country Name", "Japan")
+    lat, lon = geocode_country_center(country)
 
     st.sidebar.markdown("Click a plate boundary below to populate coordinates.")
 
     # Define a map centered on selected country
-    m = folium.Map(location=[lat, lon], zoom_start=zoom, control_scale=True)
+    m = folium.Map(location=[lat, lon], zoom_start=5, control_scale=True)
 
     try:
         res = requests.get(TECTONIC_URL)
