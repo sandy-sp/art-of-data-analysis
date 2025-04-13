@@ -35,3 +35,22 @@ def summarize_earthquake_stats(df: pd.DataFrame) -> dict:
         "max_magnitude": round(df['Magnitude'].max(), 2),
         "deepest": round(df['Depth_km'].max(), 2),
     }
+
+def validate_alignment(hourly_df: pd.DataFrame, quake_df: pd.DataFrame, min_matches: int = 3) -> Tuple[bool, str]:
+    """
+    Validates whether weather and earthquake data align sufficiently for analysis.
+    Returns a tuple (is_valid, message).
+    """
+    if hourly_df.empty:
+        return False, "Weather data is empty."
+    if quake_df.empty:
+        return False, "Earthquake data is empty."
+
+    weather_hours = pd.to_datetime(hourly_df['time']).dt.floor('H')
+    quake_hours = pd.to_datetime(quake_df['Time']).dt.floor('H')
+
+    matched_hours = set(weather_hours).intersection(set(quake_hours))
+    if len(matched_hours) < min_matches:
+        return False, f"Insufficient overlapping hours between weather and earthquake data ({len(matched_hours)} found, {min_matches} required)."
+
+    return True, "Data is aligned and ready."
