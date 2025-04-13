@@ -1,6 +1,6 @@
 import streamlit as st
 from src.components.sidebar import render_sidebar
-from pages import map_view, time_series, correlations
+from src.pages import map_view, time_series, correlations
 
 st.set_page_config(
     page_title="🌍 Weather & Earthquake Insight Dashboard",
