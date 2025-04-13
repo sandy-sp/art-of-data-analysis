@@ -24,7 +24,11 @@ def display_map(user_inputs):
             limit=user_inputs['limit']
         )
 
+    if hourly_df.empty:
+        st.warning("No weather data available for the selected location and time range.")
+
     if quake_df.empty:
         st.warning("No earthquake data found for the selected location and time range.")
-    else:
+
+    if not quake_df.empty:
         display_interactive_map(quake_df, hourly_df, user_inputs['latitude'], user_inputs['longitude'])
