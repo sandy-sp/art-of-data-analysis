@@ -15,8 +15,8 @@ def align_weather_quake_data(hourly_df: pd.DataFrame, quake_df: pd.DataFrame) ->
 
     weather['time'] = pd.to_datetime(weather['time'])
     quakes['Time'] = pd.to_datetime(quakes['Time'])
-    weather['hour'] = weather['time'].dt.floor('H')
-    quakes['hour'] = quakes['Time'].dt.floor('H')
+    weather['hour'] = weather['time'].dt.floor('h')
+    quakes['hour'] = quakes['Time'].dt.floor('h')
 
     # Merge on 'hour'
     merged = pd.merge(quakes, weather, on='hour', how='inner', suffixes=('_quake', '_weather'))
