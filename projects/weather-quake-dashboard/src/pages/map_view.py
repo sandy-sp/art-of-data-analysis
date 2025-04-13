@@ -1,28 +1,12 @@
 import streamlit as st
-from src.api.open_meteo_api import fetch_historical_weather
-from src.api.usgs_earthquake_api import fetch_earthquake_data
 from src.components.map_display import display_interactive_map
 
-
-def display_map(user_inputs):
+def display_map(data_bundle):
     st.subheader("🗺️ Earthquakes & Weather Map")
 
-    with st.spinner("Fetching weather & earthquake data..."):
-        hourly_df, _ = fetch_historical_weather(
-            user_inputs['latitude'],
-            user_inputs['longitude'],
-            str(user_inputs['start_date']),
-            str(user_inputs['end_date'])
-        )
-
-        quake_df = fetch_earthquake_data(
-            starttime=str(user_inputs['start_date']),
-            endtime=str(user_inputs['end_date']),
-            min_magnitude=user_inputs['min_magnitude'],
-            latitude=user_inputs['latitude'],
-            longitude=user_inputs['longitude'],
-            limit=user_inputs['limit']
-        )
+    hourly_df = data_bundle["weather"]
+    quake_df = data_bundle["earthquakes"]
+    inputs = data_bundle["inputs"]
 
     if hourly_df.empty:
         st.warning("No weather data available for the selected location and time range.")
@@ -31,4 +15,4 @@ def display_map(user_inputs):
         st.warning("No earthquake data found for the selected location and time range.")
 
     if not quake_df.empty:
-        display_interactive_map(quake_df, hourly_df, user_inputs['latitude'], user_inputs['longitude'])
+        display_interactive_map(quake_df, hourly_df, inputs['latitude'], inputs['longitude'])
