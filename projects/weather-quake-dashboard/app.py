@@ -11,11 +11,20 @@ st.set_page_config(
     page_icon="🌋"
 )
 
+@st.cache_data(show_spinner=False)
+def cached_fetch_weather(lat, lon, start, end):
+    return fetch_historical_weather(lat, lon, start, end)
+
+@st.cache_data(show_spinner=False)
+def cached_fetch_quakes(start, end, min_mag, lat, lon, limit):
+    return fetch_earthquake_data(start, end, min_mag, lat, lon, limit)
+
 # Display region picker before sidebar input
 render_region_selector()
 
 # Sidebar controls
 user_inputs = render_sidebar()
+refresh = st.sidebar.checkbox("🔄 Force Refresh", value=False)
 
 # Main header
 st.title("🌍 Weather & Earthquake Insight Dashboard")
@@ -27,21 +36,36 @@ maps, time-series plots, and correlation analysis for better understanding of ge
 # Only fetch data once Fetch button is pressed
 if st.session_state.get("data_ready"):
     with st.spinner("Fetching weather and earthquake data..."):
-        hourly_df, _ = fetch_historical_weather(
-            user_inputs['latitude'],
-            user_inputs['longitude'],
-            str(user_inputs['start_date']),
-            str(user_inputs['end_date'])
-        )
-
-        quake_df = fetch_earthquake_data(
-            starttime=str(user_inputs['start_date']),
-            endtime=str(user_inputs['end_date']),
-            min_magnitude=user_inputs['min_magnitude'],
-            latitude=user_inputs['latitude'],
-            longitude=user_inputs['longitude'],
-            limit=user_inputs['limit']
-        )
+        if refresh:
+            hourly_df, _ = fetch_historical_weather(
+                user_inputs['latitude'],
+                user_inputs['longitude'],
+                str(user_inputs['start_date']),
+                str(user_inputs['end_date'])
+            )
+            quake_df = fetch_earthquake_data(
+                str(user_inputs['start_date']),
+                str(user_inputs['end_date']),
+                user_inputs['min_magnitude'],
+                user_inputs['latitude'],
+                user_inputs['longitude'],
+                user_inputs['limit']
+            )
+        else:
+            hourly_df, _ = cached_fetch_weather(
+                user_inputs['latitude'],
+                user_inputs['longitude'],
+                str(user_inputs['start_date']),
+                str(user_inputs['end_date'])
+            )
+            quake_df = cached_fetch_quakes(
+                str(user_inputs['start_date']),
+                str(user_inputs['end_date']),
+                user_inputs['min_magnitude'],
+                user_inputs['latitude'],
+                user_inputs['longitude'],
+                user_inputs['limit']
+            )
 
         st.session_state['weather_data'] = hourly_df
         st.session_state['quake_data'] = quake_df
