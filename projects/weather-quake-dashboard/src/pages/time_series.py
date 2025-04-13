@@ -1,5 +1,6 @@
 import streamlit as st
 from src.utils.visualization import plot_temperature_humidity, plot_earthquake_frequency
+from src.utils.data_processing import summarize_earthquake_stats
 
 
 def display_timeseries(data_bundle):
@@ -12,6 +13,16 @@ def display_timeseries(data_bundle):
         st.warning("No weather data available for the selected location and time range.")
     if quake_df.empty:
         st.warning("No earthquake data available for the selected location and time range.")
+
+    # Summary stats
+    st.markdown("### 📊 Earthquake Summary")
+    summary = summarize_earthquake_stats(quake_df)
+    st.write({
+        "Total Events": summary.get("total", 0),
+        "Average Magnitude": summary.get("avg_magnitude", "-"),
+        "Max Magnitude": summary.get("max_magnitude", "-"),
+        "Deepest Quake (km)": summary.get("deepest", "-")
+    })
 
     st.markdown("### 🌡️ Temperature and Humidity")
     fig1 = plot_temperature_humidity(hourly_df)
