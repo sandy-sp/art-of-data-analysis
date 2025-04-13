@@ -1,5 +1,6 @@
 import streamlit as st
 from src.components.sidebar import render_sidebar
+from src.components.region_selector import render_region_selector
 from src.pages import map_view, time_series, correlations
 
 st.set_page_config(
@@ -7,6 +8,9 @@ st.set_page_config(
     layout="wide",
     page_icon="🌋"
 )
+
+# Display region picker before sidebar input
+render_region_selector()
 
 # Sidebar controls
 user_inputs = render_sidebar()
