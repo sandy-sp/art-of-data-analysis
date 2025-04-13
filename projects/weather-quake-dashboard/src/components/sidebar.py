@@ -1,5 +1,6 @@
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date
+import calendar
 
 def render_sidebar():
     st.sidebar.title("🔧 Settings")
@@ -13,14 +14,17 @@ def render_sidebar():
     latitude = st.sidebar.number_input("Latitude", min_value=-90.0, max_value=90.0, value=default_lat, format="%.4f")
     longitude = st.sidebar.number_input("Longitude", min_value=-180.0, max_value=180.0, value=default_lon, format="%.4f")
 
-    # Date range (limit Open-Meteo API max range to 31 days)
-    st.sidebar.subheader("🗓️ Date Range")
-    today = date.today()
-    start_date = st.sidebar.date_input("Start Date", today - timedelta(days=7), max_value=today)
-    end_date = st.sidebar.date_input("End Date", today, min_value=start_date, max_value=today)
+    # Month and Year input (replaces Start/End Date)
+    st.sidebar.subheader("🗓️ Date (Open-Meteo supports one month only)")
+    current_year = date.today().year
+    year = st.sidebar.selectbox("Year", list(range(current_year, current_year - 5, -1)))
+    month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:])
 
-    if (end_date - start_date).days > 31:
-        st.sidebar.warning("Open-Meteo supports only up to 31 days of historical data.")
+    # Compute start and end date for API
+    month_index = list(calendar.month_name).index(month)
+    start_date = date(year, month_index, 1)
+    end_day = calendar.monthrange(year, month_index)[1]
+    end_date = date(year, month_index, end_day)
 
     # Magnitude filter
     st.sidebar.subheader("🌋 Earthquake Filter")
