@@ -66,3 +66,18 @@ def plot_magnitude_vs_weather(joined_df: pd.DataFrame):
         hover_data=['Place']
     )
     return fig
+
+def plot_magnitude_histogram(df: pd.DataFrame):
+    if df.empty or 'Magnitude' not in df:
+        return None
+
+    fig = px.histogram(
+        df,
+        x='Magnitude',
+        nbins=20,
+        title='Distribution of Earthquake Magnitudes',
+        labels={'Magnitude': 'Magnitude'},
+        opacity=0.75
+    )
+    fig.update_layout(bargap=0.1)
+    return fig
