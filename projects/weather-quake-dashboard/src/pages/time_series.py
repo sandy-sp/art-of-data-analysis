@@ -24,16 +24,21 @@ def display_timeseries(user_inputs):
             limit=user_inputs['limit']
         )
 
+    if hourly_df.empty:
+        st.warning("No weather data available for the selected location and time range.")
+    if quake_df.empty:
+        st.warning("No earthquake data available for the selected location and time range.")
+
     st.markdown("### 🌡️ Temperature and Humidity")
     fig1 = plot_temperature_humidity(hourly_df)
     if fig1:
         st.plotly_chart(fig1, use_container_width=True)
     else:
-        st.info("No weather data available for the selected range.")
+        st.info("No data to plot temperature and humidity.")
 
     st.markdown("### 🌋 Earthquake Frequency")
     fig2 = plot_earthquake_frequency(quake_df)
     if fig2:
         st.plotly_chart(fig2, use_container_width=True)
     else:
-        st.info("No earthquake data available to plot.")
+        st.info("No data to plot earthquake frequency.")
