@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 def plot_temperature_humidity(hourly_df: pd.DataFrame):
-    if hourly_df.empty:
+    if hourly_df.empty or 'temperature_2m' not in hourly_df or 'relativehumidity_2m' not in hourly_df:
         return None
 
     fig = go.Figure()
@@ -32,7 +32,7 @@ def plot_temperature_humidity(hourly_df: pd.DataFrame):
     return fig
 
 def plot_earthquake_frequency(df: pd.DataFrame):
-    if df.empty:
+    if df.empty or 'Time' not in df:
         return None
 
     df['Time'] = pd.to_datetime(df['Time'])
@@ -49,7 +49,7 @@ def plot_earthquake_frequency(df: pd.DataFrame):
     return fig
 
 def plot_magnitude_vs_weather(joined_df: pd.DataFrame):
-    if joined_df.empty:
+    if joined_df.empty or 'temperature_2m' not in joined_df or 'Magnitude' not in joined_df or 'relativehumidity_2m' not in joined_df:
         return None
 
     fig = px.scatter(
