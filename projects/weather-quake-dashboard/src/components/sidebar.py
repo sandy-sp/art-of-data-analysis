@@ -29,6 +29,11 @@ def render_sidebar():
     # Limit (USGS API allows up to 20,000, default 500)
     event_limit = st.sidebar.slider("Max Earthquakes", 10, 2000, 500, step=10)
 
+    # Fetch data button
+    fetch_btn = st.sidebar.button("📥 Fetch & Analyze")
+    if fetch_btn:
+        st.session_state["data_ready"] = True
+
     return {
         "latitude": latitude,
         "longitude": longitude,
