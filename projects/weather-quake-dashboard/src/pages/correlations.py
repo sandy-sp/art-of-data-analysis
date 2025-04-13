@@ -25,7 +25,12 @@ def display_correlation_analysis(user_inputs):
             limit=user_inputs['limit']
         )
 
-        joined_df = align_weather_quake_data(hourly_df, quake_df)
+    if hourly_df.empty:
+        st.warning("No weather data available for the selected location and time range.")
+    if quake_df.empty:
+        st.warning("No earthquake data available for the selected location and time range.")
+
+    joined_df = align_weather_quake_data(hourly_df, quake_df)
 
     st.markdown("### 🔬 Scatter: Magnitude vs Temperature & Humidity")
     fig = plot_magnitude_vs_weather(joined_df)
