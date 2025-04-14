@@ -1,27 +1,40 @@
 # 🌍 Weather & Earthquake Insight Dashboard
 
-An interactive Streamlit dashboard that combines historical **weather** data (from Open-Meteo) with real-time **earthquake** data (from USGS) to help you explore geophysical patterns, correlations, and risks.
+An advanced interactive dashboard built with Streamlit, combining **Open-Meteo weather data**, **USGS earthquake data**, and **high-resolution tectonic plate boundaries** to visualize geophysical activity and correlations.
 
 ---
 
 ## 🚀 Features
 
-- 🌡️ Hourly Temperature, Humidity, Wind, and Precipitation from Open-Meteo
-- 🌋 USGS Earthquake Events by Time, Location, and Magnitude
-- 🗺️ Interactive Folium Map View with clustered quakes and weather overlay
-- 📈 Time Series Visualizations
-- 🔍 Correlation Analysis: Temperature/Humidity vs Earthquake Magnitude
-- 📤 Export-ready and testable with Pytest
+- 📍 **Region Picker**: Click on a tectonic map to select coordinates.
+- 🌐 **Dynamic Country Zoom**: Auto-zooms map to selected country via geocoding.
+- 📅 **Month & Year Filter**: Limits data to a valid 31-day window for Open-Meteo.
+- 🌋 **Earthquake Analysis**:
+  - Time series of magnitudes
+  - Frequency bar charts
+  - 3D depth scatterplot
+  - Histogram of magnitudes
+- 🔥 **Heatmaps**:
+  - Earthquakes near vs far from tectonic boundaries
+- 🗺️ **Tectonic Overlay**:
+  - Load detailed USGS plate boundaries
+  - Toggle on/off from the sidebar
+- 📏 **Distance Filter**: Filter earthquakes within X km of tectonic plates
 
 ---
 
-## 📦 Setup
+## 🛠️ Setup
 
 ```bash
-git clone https://github.com/yourusername/weather-quake-dashboard.git
-cd weather-quake-dashboard
+git clone https://github.com/sandy-sp/art-of-data-analysis.git
+cd projects/weather-quake-dashboard
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+```
+
+### Additional Requirements
+```bash
 pip install -r requirements.txt
 ```
 
@@ -35,40 +48,39 @@ streamlit run app.py
 
 ---
 
-## 🧪 Run Tests
-
-```bash
-pytest tests/
-```
-
----
-
-## 🔗 API References
-
-- [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
-- [USGS Earthquake API](https://earthquake.usgs.gov/fdsnws/event/1/)
-
----
-
 ## 📁 Project Structure
 
 ```plaintext
-├── app.py                  # Streamlit entry point
-├── pages/                  # Multi-tab view scripts
-├── src/                    # API, component, and utility modules
-├── data/                   # Raw and processed local data (optional caching)
-├── tests/                  # Unit test modules
-├── requirements.txt        # Dependencies
-└── README.md               # Project documentation
+src/
+├── api/                  # Open-Meteo and USGS API fetchers
+├── components/           # Sidebar, region picker, map display
+├── pages/                # Streamlit view modules
+├── utils/                # Data processing + tectonic loader
+├── data/                 # GeoJSON tectonic files, output
+app.py                    # Entry point
 ```
 
 ---
 
-## 📸 Screenshots (Optional)
-_Add `streamlit-folium`, `plotly`, or live gif previews here._
+## 📊 Visual Samples
+
+| View               | Description                          |
+|--------------------|--------------------------------------|
+| Map View           | Earthquake & weather locations       |
+| Time Series        | Temperature, humidity, frequency     |
+| Correlations       | Scatter: magnitude vs temperature    |
+| 3D View            | Earthquake depth by lat/lon/mag      |
+| Heatmap            | Near vs far quake densities          |
+
+---
+
+## 🔗 Data Sources
+
+- [Open-Meteo API](https://open-meteo.com/en/docs)
+- [USGS Earthquake API](https://earthquake.usgs.gov/fdsnws/event/1/)
+- [USGS Tectonic Boundaries (GeoJSON)](https://earthquake.usgs.gov/)
 
 ---
 
 ## 📄 License
-
-MIT License © [Your Name](https://github.com/yourusername)
+MIT License © [Your Name](https://github.com/sandy-sp)
