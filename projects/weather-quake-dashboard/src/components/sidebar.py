@@ -33,6 +33,9 @@ def render_sidebar():
     # Limit (USGS API allows up to 20,000, default 500)
     event_limit = st.sidebar.slider("Max Earthquakes", 10, 2000, 500, step=10)
 
+    # Tectonic toggle
+    st.session_state["show_tectonics"] = st.sidebar.checkbox("Show Tectonic Boundaries", value=True)
+
     # Fetch data button
     fetch_btn = st.sidebar.button("📥 Fetch & Analyze")
     if fetch_btn:
