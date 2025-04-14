@@ -3,6 +3,8 @@ from src.components.sidebar import render_sidebar
 from src.components.region_selector import render_region_selector
 from src.api.open_meteo_api import fetch_historical_weather
 from src.api.usgs_earthquake_api import fetch_earthquake_data
+from src.utils.tectonic_loader import load_tectonic_boundaries
+from src.data_processing import filter_quakes_near_boundaries
 from src.pages import map_view, time_series, correlations, quake_3d
 
 st.set_page_config(
@@ -25,6 +27,8 @@ render_region_selector()
 # Sidebar controls
 user_inputs = render_sidebar()
 refresh = st.sidebar.checkbox("🔄 Force Refresh", value=False)
+filter_near_boundaries = st.sidebar.checkbox("📍 Filter quakes near tectonic boundaries", value=True)
+max_distance_km = st.sidebar.slider("Max Distance to Boundary (km)", 10, 100, 50, step=5) if filter_near_boundaries else 0
 
 # Main header
 st.title("🌍 Weather & Earthquake Insight Dashboard")
@@ -33,7 +37,6 @@ This app combines **historical weather** (Open-Meteo) and **earthquake data** (U
 maps, time-series plots, and correlation analysis for better understanding of geophysical dynamics.
 """)
 
-# Only fetch data once Fetch button is pressed
 if st.session_state.get("data_ready"):
     with st.spinner("Fetching weather and earthquake data..."):
         if refresh:
@@ -67,12 +70,17 @@ if st.session_state.get("data_ready"):
                 user_inputs['limit']
             )
 
+        if filter_near_boundaries:
+            tectonics = load_tectonic_boundaries()
+            if tectonics is not None and not tectonics.empty:
+                quake_df = filter_quakes_near_boundaries(quake_df, tectonics, max_distance_km=max_distance_km)
+                st.info("Filtered earthquakes to those within 50 km of tectonic boundaries.")
+
         st.session_state['weather_data'] = hourly_df
         st.session_state['quake_data'] = quake_df
         st.success("Data fetched successfully. You can now explore visualizations below.")
-        st.session_state["data_ready"] = False  # Reset trigger
+        st.session_state["data_ready"] = False
 
-# Tabs for views
 if 'weather_data' in st.session_state and 'quake_data' in st.session_state:
     data_bundle = {
         "weather": st.session_state['weather_data'],
