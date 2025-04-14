@@ -4,7 +4,7 @@ from src.components.region_selector import render_region_selector
 from src.api.open_meteo_api import fetch_historical_weather
 from src.api.usgs_earthquake_api import fetch_earthquake_data
 from src.utils.tectonic_loader import load_tectonic_boundaries
-from src.data_processing import filter_quakes_near_boundaries
+from src.utils.data_processing import filter_quakes_near_boundaries
 from src.pages import map_view, time_series, correlations, quake_3d
 
 st.set_page_config(
