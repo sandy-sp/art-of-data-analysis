@@ -3,6 +3,8 @@ from folium.plugins import MarkerCluster
 import streamlit as st
 from streamlit_folium import st_folium
 import pandas as pd
+from src.utils.tectonic_loader import load_tectonic_boundaries
+
 
 def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: float, lon: float):
     """
@@ -24,13 +26,24 @@ def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: 
                 popup=popup
             ).add_to(eq_cluster)
 
-    # Optional: Add weather stations or weather grid data
+    # Weather Marker
     if not weather_df.empty:
         folium.Marker(
             location=[lat, lon],
             icon=folium.Icon(color='blue', icon='cloud'),
             popup="Weather Data Location"
         ).add_to(m)
+
+    # Optional: Tectonic Plate Boundaries
+    if st.session_state.get("show_tectonics", False):
+        tectonics = load_tectonic_boundaries()
+        if tectonics is not None and not tectonics.empty:
+            folium.GeoJson(
+                tectonics,
+                name="Tectonic Boundaries",
+                tooltip=folium.GeoJsonTooltip(fields=[]),
+                style_function=lambda x: {"color": "orange", "weight": 2, "opacity": 0.7},
+            ).add_to(m)
 
     folium.LayerControl().add_to(m)
     st_folium(m, width=900, height=550)
