@@ -5,6 +5,7 @@ from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 import requests
 import json
+import pycountry
 
 TECTONIC_URL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
 
@@ -20,8 +21,12 @@ def geocode_country_center(name: str):
 
 def render_region_selector():
     st.sidebar.subheader("🌍 Select Region via Tectonic Plates")
+ 
+    # Get sorted list of country names
+    country_list = sorted([c.name for c in pycountry.countries])
+    default_country = "Japan"
 
-    country = st.sidebar.text_input("Enter Country Name", "Japan")
+    country = st.sidebar.selectbox("Select Country", country_list, index=country_list.index(default_country))
     lat, lon = geocode_country_center(country)
 
     st.sidebar.markdown("Click a plate boundary below to populate coordinates.")
