@@ -5,7 +5,6 @@ from streamlit_folium import st_folium
 import pandas as pd
 from src.utils.tectonic_loader import load_tectonic_boundaries
 
-
 def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: float, lon: float):
     """
     Display earthquakes and optionally weather station data on a Folium map.
@@ -34,16 +33,17 @@ def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: 
             popup="Weather Data Location"
         ).add_to(m)
 
-    # Optional: Tectonic Plate Boundaries
+    # Tectonic Plate Boundaries
     if st.session_state.get("show_tectonics", False):
         tectonics = load_tectonic_boundaries()
         if tectonics is not None and not tectonics.empty:
             folium.GeoJson(
-                tectonics,
+                tectonics.__geo_interface__,
                 name="Tectonic Boundaries",
-                tooltip=folium.GeoJsonTooltip(fields=[]),
                 style_function=lambda x: {"color": "orange", "weight": 2, "opacity": 0.7},
             ).add_to(m)
+        else:
+            st.warning("⚠️ Could not render tectonic boundaries.")
 
     folium.LayerControl().add_to(m)
     st_folium(m, width=900, height=550)
