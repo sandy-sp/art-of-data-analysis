@@ -1,24 +1,47 @@
 import streamlit as st
-from src.utils.data_processing import align_weather_quake_data
-from src.utils.visualization import plot_magnitude_vs_weather
+import plotly.express as px
+import pandas as pd
 
+def align_weather_quake_data(weather_df, quake_df):
+    if weather_df.empty or quake_df.empty:
+        return pd.DataFrame()
 
-def display_correlation_analysis(data_bundle):
-    st.subheader("🔍 Weather vs. Earthquake Correlation")
+    weather_df['hour'] = pd.to_datetime(weather_df['time']).dt.floor('h')
+    quake_df['hour'] = pd.to_datetime(quake_df['Time']).dt.floor('h')
 
-    hourly_df = data_bundle["weather"]
-    quake_df = data_bundle["earthquakes"]
+    merged_df = pd.merge(quake_df, weather_df, on='hour', how='inner')
+    return merged_df
 
-    if hourly_df.empty:
-        st.warning("No weather data available for the selected location and time range.")
-    if quake_df.empty:
-        st.warning("No earthquake data available for the selected location and time range.")
+def plot_correlation(joined_df):
+    if joined_df.empty:
+        return None
 
-    joined_df = align_weather_quake_data(hourly_df, quake_df)
+    fig = px.scatter(
+        joined_df,
+        x='temperature_2m',
+        y='Magnitude',
+        color='relativehumidity_2m',
+        color_continuous_scale='Viridis',
+        title='🔬 Earthquake Magnitude vs Temperature & Humidity',
+        labels={
+            'temperature_2m': 'Temperature (°C)',
+            'Magnitude': 'Earthquake Magnitude',
+            'relativehumidity_2m': 'Humidity (%)'
+        },
+        hover_data=['Place', 'Time']
+    )
 
-    st.markdown("### 🔬 Scatter: Magnitude vs Temperature & Humidity")
-    fig = plot_magnitude_vs_weather(joined_df)
-    if fig:
-        st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(coloraxis_colorbar=dict(title='Humidity (%)'))
+    return fig
+
+def display_correlations(weather_df, quake_df):
+    st.subheader("🔍 Correlation Analysis")
+
+    joined_df = align_weather_quake_data(weather_df, quake_df)
+
+    correlation_fig = plot_correlation(joined_df)
+
+    if correlation_fig:
+        st.plotly_chart(correlation_fig, use_container_width=True)
     else:
-        st.info("Insufficient data to generate correlation chart.")
+        st.warning("Insufficient overlapping data to generate correlation plot.")
