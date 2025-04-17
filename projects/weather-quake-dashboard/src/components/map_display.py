@@ -7,7 +7,7 @@ from src.utils.tectonic_loader import load_tectonic_boundaries
 
 def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: float, lon: float):
     """
-    Display earthquakes, weather, and tectonic boundaries on a Folium map with interactivity.
+    Display earthquakes, weather, and tectonic boundaries on a Folium map with interactivity and zoom hints.
     """
     m = folium.Map(location=[lat, lon], zoom_start=6, control_scale=True)
 
@@ -33,27 +33,31 @@ def display_interactive_map(eq_df: pd.DataFrame, weather_df: pd.DataFrame, lat: 
             popup="Weather Data Location"
         ).add_to(m)
 
-    # Tectonic plate boundaries with tooltip and popup
+    # Tectonic plate boundaries with tooltips
     if st.session_state.get("show_tectonics", False):
         tectonics = load_tectonic_boundaries()
         if tectonics is not None and not tectonics.empty:
-            try:
-                if "Name" not in tectonics.columns:
-                    tectonics["Name"] = tectonics.index.astype(str)
+            if "Name" not in tectonics.columns:
+                tectonics["Name"] = tectonics.index.astype(str)
 
-                folium.GeoJson(
-                    tectonics.__geo_interface__,
-                    name="🌋 Tectonic Boundaries",
-                    style_function=lambda x: {
-                        "color": "orange",
-                        "weight": 2,
-                        "opacity": 0.8
-                    },
-                    tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Boundary ID"]),
-                    popup=folium.GeoJsonPopup(fields=["Name"], labels=True)
-                ).add_to(m)
-            except Exception as geojson_err:
-                st.warning(f"⚠️ Failed to render tectonic boundaries: {geojson_err}")
+            bounds = tectonics.total_bounds  # [minx, miny, maxx, maxy]
+            tectonic_center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
+
+            folium.GeoJson(
+                tectonics.__geo_interface__,
+                name="🌋 Tectonic Boundaries",
+                style_function=lambda x: {
+                    "color": "orange",
+                    "weight": 2,
+                    "opacity": 0.8
+                },
+                tooltip=folium.GeoJsonTooltip(fields=["Name"], aliases=["Boundary ID"]),
+                popup=folium.GeoJsonPopup(fields=["Name"], labels=True)
+            ).add_to(m)
+
+            if not (bounds[0] <= lon <= bounds[2] and bounds[1] <= lat <= bounds[3]):
+                st.info("🗺️ Tectonic boundaries may be out of view — try zooming out or panning.")
+
         else:
             st.warning("⚠️ Tectonic boundary data is empty or invalid.")
 
