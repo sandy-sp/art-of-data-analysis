@@ -14,6 +14,8 @@ US_LOCATIONS = {
     "Chicago, IL": "Chicago, IL, USA"
 }
 
+SUGGESTED_ZIPS = ["94103 (San Francisco)", "90001 (Los Angeles)", "98101 (Seattle)"]
+
 @st.cache_data(show_spinner=False)
 def geocode_location(query):
     geolocator = Nominatim(user_agent="quake-weather-app")
@@ -27,6 +29,7 @@ def render_region_selector():
 
     if method == "ZIP Code":
         zip_input = st.text_input("🔢 Enter ZIP Code", value="10001")
+        st.caption("💡 Try: " + ", ".join(SUGGESTED_ZIPS))
         query = f"{zip_input}, USA"
     else:
         location_name = st.selectbox("🏙️ Choose a U.S. City", list(US_LOCATIONS.keys()), index=1)
@@ -44,7 +47,6 @@ def render_region_selector():
             show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_region_selector')
             st.session_state["show_tectonics"] = show_tectonics
 
-    # Fetch history
     history_start = (datetime.now() - timedelta(days=5*365)).date()
     history_end = datetime.now().date()
 
@@ -67,8 +69,10 @@ def render_region_selector():
             color='red',
             fill=True,
             fill_opacity=0.6,
-            popup=popup
+            popup=popup,
+            tooltip=f"{row['Place']} | Mag {row['Magnitude']} | {row['Time']}"
         ).add_to(m)
+
 
     if locations:
         m.fit_bounds(locations)
@@ -113,3 +117,5 @@ def render_region_selector():
             )
             fig.update_layout(xaxis_tickangle=45)
             st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("⚠️ No data found for this region. Try a ZIP like 94103, 90001, or 98101 for better results.")
