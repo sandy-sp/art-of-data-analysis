@@ -6,18 +6,12 @@ from datetime import datetime, timedelta
 import pandas as pd
 from src.api.usgs_earthquake_api import fetch_earthquake_data
 
-# Predefined US city/state/ZIP examples (extend or make dynamic later)
 US_LOCATIONS = {
     "New York, NY": "New York, NY, USA",
     "San Francisco, CA": "San Francisco, CA, USA",
     "Seattle, WA": "Seattle, WA, USA",
     "Los Angeles, CA": "Los Angeles, CA, USA",
-    "Chicago, IL": "Chicago, IL, USA",
-    "Miami, FL": "Miami, FL, USA",
-    "Denver, CO": "Denver, CO, USA",
-    "Boston, MA": "Boston, MA, USA",
-    "Houston, TX": "Houston, TX, USA",
-    "Phoenix, AZ": "Phoenix, AZ, USA"
+    "Chicago, IL": "Chicago, IL, USA"
 }
 
 @st.cache_data(show_spinner=False)
@@ -29,10 +23,16 @@ def geocode_location(query):
 def render_region_selector():
     st.subheader("🗺️ Select US Region for Analysis")
 
-    location_name = st.selectbox("🏙️ Choose a U.S. City or ZIP", list(US_LOCATIONS.keys()), index=1)
-    query = US_LOCATIONS[location_name]
-    latitude, longitude = geocode_location(query)
+    method = st.radio("Choose Location Method", ["City/State", "ZIP Code"], horizontal=True)
 
+    if method == "ZIP Code":
+        zip_input = st.text_input("🔢 Enter ZIP Code", value="10001")
+        query = f"{zip_input}, USA"
+    else:
+        location_name = st.selectbox("🏙️ Choose a U.S. City", list(US_LOCATIONS.keys()), index=1)
+        query = US_LOCATIONS[location_name]
+
+    latitude, longitude = geocode_location(query)
     st.session_state["latitude"] = latitude
     st.session_state["longitude"] = longitude
 
@@ -44,7 +44,7 @@ def render_region_selector():
             show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_region_selector')
             st.session_state["show_tectonics"] = show_tectonics
 
-    # Preview recent quake history (5 years)
+    # Fetch history
     history_start = (datetime.now() - timedelta(days=5*365)).date()
     history_end = datetime.now().date()
 
