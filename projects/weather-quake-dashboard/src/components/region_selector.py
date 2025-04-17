@@ -57,15 +57,25 @@ def render_region_selector():
 
             # --- Optional: Preview Map of Quakes ---
             with st.expander("🗺️ View Historical Quake Locations"):
-                preview_map = folium.Map(location=[latitude, longitude], zoom_start=4, control_scale=True)
-                for _, row in preview_df.iterrows():
+                locations = preview_df[["Latitude", "Longitude"]].dropna().values.tolist()
+                preview_map = folium.Map(control_scale=True)
+
+                # Add quake markers
+                for loc in locations:
                     folium.CircleMarker(
-                        location=[row["Latitude"], row["Longitude"]],
+                        location=loc,
                         radius=2,
                         color="red",
                         fill=True,
-                        fill_opacity=0.5,
+                        fill_opacity=0.5
                     ).add_to(preview_map)
+
+                # Fit map to bounds
+                if locations:
+                    preview_map.fit_bounds(locations)
+                else:
+                    preview_map.location = [latitude, longitude]
+                    preview_map.zoom_start = 4
 
                 st_folium(preview_map, width=700, height=400)
         else:
