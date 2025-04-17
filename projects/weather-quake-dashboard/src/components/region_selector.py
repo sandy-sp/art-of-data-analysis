@@ -56,6 +56,17 @@ def render_region_selector():
             st.markdown("### 📅 Earthquake History (Last 5 Years)")
             st.dataframe(monthly_summary, use_container_width=True, hide_index=True)
 
+            # --- Summary Card ---
+            latest_event = preview_df.sort_values("Time", ascending=False).iloc[0]
+            avg_mag = round(preview_df["Magnitude"].mean(), 2)
+
+            st.markdown("### 📊 Summary")
+            st.info(f"""
+            - **Total Events:** {len(preview_df)}  
+            - **Most Recent:** {latest_event['Time']} @ {latest_event['Place']}  
+            - **Average Magnitude:** {avg_mag}
+            """)
+
             # --- Historical Trend Chart ---
             with st.expander("📈 View Earthquake Frequency Trend", expanded=False):
                 fig = px.bar(
@@ -96,6 +107,7 @@ def render_region_selector():
 
     with col2:
         st.markdown("🗺️ **Refine location by clicking on the map:**")
+        st.caption("💡 Click anywhere on the map to refine your selected coordinates.")
         m = folium.Map(location=[latitude, longitude], zoom_start=5, control_scale=True)
         folium.Marker([latitude, longitude], tooltip="Selected Country Center", icon=folium.Icon(color="blue")).add_to(m)
 
