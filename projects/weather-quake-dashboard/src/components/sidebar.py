@@ -7,8 +7,8 @@ def render_sidebar():
 
     # --- Map & Display Settings ---
     with st.sidebar.expander("🗺️ Map Display Options", expanded=True):
-    #    show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_sidebar')
-    #    st.session_state["show_tectonics"] = show_tectonics
+        show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_sidebar')
+        st.session_state["show_tectonics"] = show_tectonics
 
         latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0,
                                    value=st.session_state.get("latitude", 37.7749), format="%.4f")
