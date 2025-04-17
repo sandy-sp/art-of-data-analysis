@@ -43,9 +43,9 @@ def render_region_selector():
         col1, col2 = st.columns(2)
         with col1:
             preview_min_mag = st.slider("Minimum Magnitude", 2.0, 7.0, 3.5, step=0.1)
-#        with col2:
-#            show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_region_selector')
-#            st.session_state["show_tectonics"] = show_tectonics
+        with col2:
+            show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_region_selector')
+            st.session_state["show_tectonics"] = show_tectonics
 
     history_start = (datetime.now() - timedelta(days=5*365)).date()
     history_end = datetime.now().date()
