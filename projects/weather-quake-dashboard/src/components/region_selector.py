@@ -38,33 +38,31 @@ def render_region_selector():
     country = st.sidebar.selectbox("Select Country", country_list, index=country_list.index("Japan"))
     lat, lon = geocode_country_center(country)
 
-    st.sidebar.markdown("Click on the map or choose a boundary near your country.")
+    st.sidebar.markdown("Click a plate centroid marker below to set coordinates.")
 
-    # Load tectonic plate data
+    # Load tectonic data
     tectonics = load_tectonic_geojson()
 
-    # Filter by distance to country center
-    nearby_coords = []
+    # Filter and prepare nearby centroids
+    nearby_centroids = []
     for idx, row in tectonics.iterrows():
-        center = shape(row["geometry"]).centroid
-        dist_km = geodesic((lat, lon), (center.y, center.x)).km
-        if dist_km <= 1000:
-            nearby_coords.append((f"Segment #{idx} at ({center.y:.2f}, {center.x:.2f})", center.y, center.x))
-
-    if nearby_coords:
-        selected = st.sidebar.selectbox(
-            "Tectonic Boundary Nearby (within 1000km)",
-            [label for label, _, _ in nearby_coords]
-        )
-        for label, y, x in nearby_coords:
-            if label == selected:
-                st.session_state["latitude"] = y
-                st.session_state["longitude"] = x
-                st.success(f"Selected from list: ({y:.4f}, {x:.4f})")
-                break
+        centroid = shape(row["geometry"]).centroid
+        distance = geodesic((lat, lon), (centroid.y, centroid.x)).km
+        if distance <= 1000:
+            nearby_centroids.append((centroid.y, centroid.x, f"Segment #{idx} ({distance:.0f} km)"))
 
     # Draw map
     m = folium.Map(location=[lat, lon], zoom_start=5, control_scale=True)
+
+    # Plot centroids as clickable markers
+    for lat_c, lon_c, label in nearby_centroids:
+        folium.Marker(
+            location=[lat_c, lon_c],
+            popup=label,
+            icon=folium.Icon(color='green', icon='map-marker')
+        ).add_to(m)
+
+    # Add tectonic boundaries layer
     folium.GeoJson(
         tectonics.__geo_interface__,
         name="Tectonic Boundaries",
@@ -72,12 +70,14 @@ def render_region_selector():
         highlight_function=lambda x: {"fillColor": "orange", "color": "red"},
         popup=folium.GeoJsonPopup(fields=[], labels=False)
     ).add_to(m)
+
     m.add_child(folium.LatLngPopup())
 
+    # Render map and handle user click
     output = st_folium(m, width=700, height=450)
     clicked = output.get("last_clicked")
 
     if clicked:
         st.session_state["latitude"] = clicked["lat"]
         st.session_state["longitude"] = clicked["lng"]
-        st.success(f"Selected from map: ({clicked['lat']:.4f}, {clicked['lng']:.4f})")
+        st.success(f"Selected Coordinates: ({clicked['lat']:.4f}, {clicked['lng']:.4f})")
