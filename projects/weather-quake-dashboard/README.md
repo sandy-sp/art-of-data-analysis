@@ -1,40 +1,50 @@
 # 🌍 Weather & Earthquake Insight Dashboard
 
-An advanced interactive dashboard built with Streamlit, combining **Open-Meteo weather data**, **USGS earthquake data**, and **high-resolution tectonic plate boundaries** to visualize geophysical activity and correlations.
+An interactive Streamlit dashboard integrating **Open-Meteo weather data**, **USGS earthquake data**, and **tectonic plate boundaries** to visualize and explore geophysical patterns and correlations.
 
 ---
 
 ## 🚀 Features
 
-- 📍 **Region Picker**: Click on a tectonic map to select coordinates.
-- 🌐 **Dynamic Country Zoom**: Auto-zooms map to selected country via geocoding.
-- 📅 **Month & Year Filter**: Limits data to a valid 31-day window for Open-Meteo.
-- 🌋 **Earthquake Analysis**:
-  - Time series of magnitudes
-  - Frequency bar charts
-  - 3D depth scatterplot
-  - Histogram of magnitudes
-- 🔥 **Heatmaps**:
-  - Earthquakes near vs far from tectonic boundaries
-- 🗺️ **Tectonic Overlay**:
-  - Load detailed USGS plate boundaries
-  - Toggle on/off from the sidebar
-- 📏 **Distance Filter**: Filter earthquakes within X km of tectonic plates
+- 🗺️ **Interactive Map**  
+  View earthquakes and weather overlayed on an interactive Folium map.
+
+- 📊 **Time Series Analysis**  
+  Explore trends in temperature, humidity, and earthquake frequency.
+
+- 🔗 **Correlation Visualization**  
+  Analyze potential relationships between earthquake magnitude and weather.
+
+- 🌐 **3D Earthquake Visualization**  
+  View depth and magnitude of seismic events in a fully rotatable 3D plot.
+
+- 📍 **Region Selector**  
+  Choose a country or click on the map to set analysis coordinates.
+
+---
+
+## 🧰 Technologies
+
+- [Streamlit](https://streamlit.io)
+- [Plotly](https://plotly.com/python/)
+- [Folium](https://python-visualization.github.io/folium/)
+- [Open-Meteo API](https://open-meteo.com/en/docs)
+- [USGS Earthquake API](https://earthquake.usgs.gov/fdsnws/event/1/)
 
 ---
 
 ## 🛠️ Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/sandy-sp/art-of-data-analysis.git
 cd projects/weather-quake-dashboard
+
+# Create a virtual environment
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-```
 
-### Additional Requirements
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -46,41 +56,41 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+The app will open at `http://localhost:8501`.
+
 ---
 
-## 📁 Project Structure
+## 📁 Directory Structure
 
 ```plaintext
-src/
-├── api/                  # Open-Meteo and USGS API fetchers
-├── components/           # Sidebar, region picker, map display
-├── pages/                # Streamlit view modules
-├── utils/                # Data processing + tectonic loader
-├── data/                 # GeoJSON tectonic files, output
-app.py                    # Entry point
+weather-quake-dashboard/
+├── app.py                        # Main Streamlit entry point
+├── requirements.txt             # Python dependencies
+├── data/                        # Static GeoJSON tectonic boundary files
+├── src/
+│   ├── api/                     # API integration (Open-Meteo, USGS)
+│   ├── components/              # Sidebar and region selector
+│   ├── utils/                   # Data processing, caching, tectonic loader
+│   └── visualizations/          # Map, time series, correlations, 3D plots
+└── .streamlit/
+    └── config.toml              # UI theme config
 ```
 
 ---
 
-## 📊 Visual Samples
+## 📸 Screenshots
 
-| View               | Description                          |
-|--------------------|--------------------------------------|
-| Map View           | Earthquake & weather locations       |
-| Time Series        | Temperature, humidity, frequency     |
-| Correlations       | Scatter: magnitude vs temperature    |
-| 3D View            | Earthquake depth by lat/lon/mag      |
-| Heatmap            | Near vs far quake densities          |
+![Map View](assets/screenshot_map.png)
+![Time Series](assets/screenshot_time_series.png)
+![Correlations](assets/screenshot_correlation.png)
+![3D Quake View](assets/screenshot_3d.png)
 
----
-
-## 🔗 Data Sources
-
-- [Open-Meteo API](https://open-meteo.com/en/docs)
-- [USGS Earthquake API](https://earthquake.usgs.gov/fdsnws/event/1/)
-- [USGS Tectonic Boundaries (GeoJSON)](https://earthquake.usgs.gov/)
+*(Place your actual screenshot files in an `assets/` folder.)*
 
 ---
 
-## 📄 License
-MIT License © [Your Name](https://github.com/sandy-sp)
+## 🪪 License
+
+MIT License © [Sandy SP](https://github.com/sandy-sp)
+
+---
