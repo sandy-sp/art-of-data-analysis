@@ -17,11 +17,24 @@ def render_sidebar():
 
     # --- Step 2: Month & Year Selection ---
     st.sidebar.subheader("2️⃣ Select Month & Year")
-    current_year = date.today().year
-    year = st.sidebar.selectbox("Year", list(range(current_year, current_year - 5, -1)))
-    month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:], index=date.today().month - 1)
 
-    month_index = list(calendar.month_name).index(month)
+    # --- Get available months from session ---
+    available_periods = st.session_state.get("available_months", [])
+
+    if available_periods:
+        selected_period = st.sidebar.selectbox("📆 Select Available Month", available_periods, index=len(available_periods)-1)
+        year, month_str = selected_period.split('-')
+        month_index = int(month_str)
+        year = int(year)
+    else:
+        # fallback if no data available
+        st.sidebar.warning("⚠️ No available months found for this location. Using defaults.")
+        current_year = date.today().year
+        year = st.sidebar.selectbox("Year", list(range(current_year, current_year - 5, -1)))
+        month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:], index=date.today().month - 1)
+        month_index = list(calendar.month_name).index(month)
+
+    # Calculate date range
     start_date = date(year, month_index, 1)
     end_day = calendar.monthrange(year, month_index)[1]
     end_date = date(year, month_index, end_day)
