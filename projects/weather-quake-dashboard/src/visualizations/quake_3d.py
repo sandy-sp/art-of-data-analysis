@@ -1,18 +1,40 @@
 import streamlit as st
-from src.utils.visualization import plot_3d_quake_depth
+import plotly.express as px
 
-
-def display_3d_quake_map(data_bundle):
-    st.subheader("🌐 3D Earthquake Depth Visualization")
-
-    quake_df = data_bundle["earthquakes"]
-
+def plot_3d_quake(quake_df):
     if quake_df.empty:
-        st.warning("No earthquake data available to visualize in 3D.")
-        return
+        return None
+    
+    fig = px.scatter_3d(
+        quake_df,
+        x='Longitude',
+        y='Latitude',
+        z='Depth_km',
+        size='Magnitude',
+        color='Magnitude',
+        color_continuous_scale='Inferno',
+        title='🌐 3D Earthquake Visualization (Depth & Magnitude)',
+        labels={
+            'Longitude': 'Longitude',
+            'Latitude': 'Latitude',
+            'Depth_km': 'Depth (km)',
+            'Magnitude': 'Magnitude'
+        },
+        hover_data=['Place', 'Time']
+    )
 
-    fig = plot_3d_quake_depth(quake_df)
-    if fig:
-        st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(scene=dict(
+        zaxis=dict(autorange='reversed')  # Ensures depth is intuitive (surface at top)
+    ))
+
+    return fig
+
+def display_3d_quakes(quake_df):
+    st.subheader("🌎 3D Earthquake Depth and Magnitude")
+
+    quake_3d_fig = plot_3d_quake(quake_df)
+    
+    if quake_3d_fig:
+        st.plotly_chart(quake_3d_fig, use_container_width=True)
     else:
-        st.info("Insufficient data for 3D plotting. Ensure depth and location data are available.")
+        st.warning("No earthquake data available for 3D visualization.")
