@@ -3,54 +3,46 @@ from datetime import date
 import calendar
 
 def render_sidebar():
-    st.sidebar.title("🔧 Settings")
+    st.sidebar.title("⚙️ Dashboard Controls")
 
-    # --- Step 1: Region Selection ---
-    st.sidebar.subheader("1️⃣ Select Region")
-    st.sidebar.subheader("🗺️ Map Options")
-    show_tectonics = st.sidebar.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_sidebar')
-    st.session_state["show_tectonics"] = show_tectonics
+    # --- Map & Display Settings ---
+    with st.sidebar.expander("🗺️ Map Display Options", expanded=True):
+        show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_sidebar')
+        st.session_state["show_tectonics"] = show_tectonics
 
-    default_lat = st.session_state.get("latitude", 37.7749)
-    default_lon = st.session_state.get("longitude", -122.4194)
+        latitude = st.number_input("Latitude", min_value=-90.0, max_value=90.0,
+                                   value=st.session_state.get("latitude", 37.7749), format="%.4f")
+        longitude = st.number_input("Longitude", min_value=-180.0, max_value=180.0,
+                                    value=st.session_state.get("longitude", -122.4194), format="%.4f")
 
-    latitude = st.sidebar.number_input("Latitude", min_value=-90.0, max_value=90.0,
-                                       value=default_lat, format="%.4f")
-    longitude = st.sidebar.number_input("Longitude", min_value=-180.0, max_value=180.0,
-                                        value=default_lon, format="%.4f")
+    # --- Month & Year Filter ---
+    with st.sidebar.expander("📅 Date Range Selection", expanded=True):
+        available_periods = st.session_state.get("available_months", [])
 
-    # --- Step 2: Month & Year Selection ---
-    st.sidebar.subheader("2️⃣ Select Month & Year")
+        if available_periods:
+            st.caption("🗓️ Only months with earthquake data are shown.")
+            selected_period = st.selectbox("Select Available Month", available_periods, index=len(available_periods) - 1)
+            year, month_str = selected_period.split('-')
+            month_index = int(month_str)
+            year = int(year)
+        else:
+            st.warning("⚠️ No available months found for this location. Using current month.")
+            current_year = date.today().year
+            year = st.selectbox("Year", list(range(current_year, current_year - 5, -1)))
+            month = st.selectbox("Month", list(calendar.month_name)[1:], index=date.today().month - 1)
+            month_index = list(calendar.month_name).index(month)
 
-    # --- Get available months from session ---
-    available_periods = st.session_state.get("available_months", [])
+        start_date = date(year, month_index, 1)
+        end_day = calendar.monthrange(year, month_index)[1]
+        end_date = date(year, month_index, end_day)
 
-    if available_periods:
-        st.caption("🗓️ Only months with earthquake data are shown.")
-        selected_period = st.sidebar.selectbox("📆 Select Available Month", available_periods, index=len(available_periods)-1)
-        year, month_str = selected_period.split('-')
-        month_index = int(month_str)
-        year = int(year)
-    else:
-        # fallback if no data available
-        st.sidebar.warning("⚠️ No available months found for this location. Using defaults.")
-        current_year = date.today().year
-        year = st.sidebar.selectbox("Year", list(range(current_year, current_year - 5, -1)))
-        month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:], index=date.today().month - 1)
-        month_index = list(calendar.month_name).index(month)
+    # --- Earthquake Filters ---
+    with st.sidebar.expander("📊 Earthquake Filters", expanded=True):
+        min_magnitude = st.slider("Minimum Magnitude", 0.0, 10.0, 4.0, step=0.1)
+        max_distance_km = st.slider("Max Distance from Tectonic Plate (km)", 10, 1000, 50, step=10)
 
-    # Calculate date range
-    start_date = date(year, month_index, 1)
-    end_day = calendar.monthrange(year, month_index)[1]
-    end_date = date(year, month_index, end_day)
-
-    # --- Step 3: Filters ---
-    st.sidebar.subheader("3️⃣ Set Filters")
-    min_magnitude = st.sidebar.slider("Minimum Earthquake Magnitude", 0.0, 10.0, 4.0, step=0.1)
-    max_distance_km = st.sidebar.slider("Max Distance to Tectonic Boundary (km)", 10, 200, 50, step=10)
-
-    # --- Step 4: Data Fetch Button ---
-    st.sidebar.subheader("4️⃣ Fetch Data")
+    # --- Final Fetch Button ---
+    st.sidebar.markdown("---")
     if st.sidebar.button("📥 Fetch & Analyze"):
         st.session_state["data_ready"] = True
         st.session_state["fetch_params"] = {
@@ -61,6 +53,6 @@ def render_sidebar():
             "min_magnitude": min_magnitude,
             "max_distance_km": max_distance_km
         }
-        st.sidebar.success("✅ Fetching data...")
+        st.sidebar.success("✅ Fetch parameters submitted.")
 
     return st.session_state.get("fetch_params", None)
