@@ -1,93 +1,128 @@
 # 🌍 Weather & Earthquake Insight Dashboard
 
-An interactive Streamlit dashboard integrating **Open-Meteo weather data**, **USGS earthquake data**, and **tectonic plate boundaries** to visualize and explore geophysical patterns and correlations.
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://www.python.org)
+[![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-ff4b4b?logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Plotly](https://img.shields.io/badge/Charts-Plotly-3e4f6a?logo=plotly&logoColor=white)](https://plotly.com)
+[![Folium](https://img.shields.io/badge/Maps-Folium-43a047?logo=leaflet&logoColor=white)](https://python-visualization.github.io/folium/)
+[![Open-Meteo](https://img.shields.io/badge/API-Open--Meteo-green)](https://open-meteo.com/)
+[![USGS](https://img.shields.io/badge/API-USGS-grey)](https://earthquake.usgs.gov/fdsnws/event/1/)
+[![Geopy](https://img.shields.io/badge/Geocoding-Geopy-blue)](https://pypi.org/project/geopy/)
+[![Docker](https://img.shields.io/badge/Deploy-Docker-2496ed?logo=docker)](https://www.docker.com)
+
+An interactive Streamlit app that visualizes the intersection of weather patterns, earthquake data, and tectonic boundaries in the United States using real-time geospatial APIs.
 
 ---
 
-## 🚀 Features
+## 🔍 Features
 
-- 📊 **Time Series Analysis**  
-  Explore trends in temperature, humidity, and earthquake frequency.
-
-- 🔗 **Correlation Visualization**  
-  Analyze potential relationships between earthquake magnitude and weather.
-
-- 🌐 **3D Earthquake Visualization**  
-  View depth and magnitude of seismic events in a fully rotatable 3D plot.
-
-- 📍 **Region Selector**  
-  Choose a country or click on the map to set analysis coordinates.
-
----
-
-## 🧰 Technologies
-
-- [Streamlit](https://streamlit.io)
-- [Plotly](https://plotly.com/python/)
-- [Folium](https://python-visualization.github.io/folium/)
-- [Open-Meteo API](https://open-meteo.com/en/docs)
-- [USGS Earthquake API](https://earthquake.usgs.gov/fdsnws/event/1/)
+- Select U.S. region via **city/state or ZIP code**
+- Auto-fetch latitude/longitude with geocoding
+- Real-time data from:
+  - Open-Meteo API (weather)
+  - USGS API (earthquakes)
+- Visual components:
+  - Time-series trends
+  - Correlation scatterplots (magnitude ↔ weather)
+  - 3D earthquake depth views
+  - Interactive Folium map with clustered markers
+  - Tectonic boundary overlay with tooltips + zoom cues
+- Downloadable **GeoJSON export** of filtered events
+- Smart fallback messaging + suggested ZIPs for data-rich regions
 
 ---
 
-## 🛠️ Setup
+## 🚨 Live on Streamlit Cloud
+
+> 🟢 Try it now: [🌍 Weather & Earthquake Insight Dashboard](https://art-of-data-analysis-weather-quake-dashboard.streamlit.app/)
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone & Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/sandy-sp/art-of-data-analysis.git
 cd projects/weather-quake-dashboard
+```
 
-# Create a virtual environment
+### 2. Create Virtual Environment
+
+```bash
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/bin/activate  # or .\\venv\\Scripts\\activate on Windows
+```
 
-# Install dependencies
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
----
-
-## ▶️ Run the App
+### 4. Launch App
 
 ```bash
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`.
-
 ---
 
-## 📁 Directory Structure
+## 📦 Project Structure
 
-```plaintext
+```
 weather-quake-dashboard/
-├── app.py                        # Main Streamlit entry point
-├── requirements.txt             # Python dependencies
-├── data/                        # Static GeoJSON tectonic boundary files
+├── app.py                     # Main Streamlit app
+├── requirements.txt
 ├── src/
-│   ├── api/                     # API integration (Open-Meteo, USGS)
-│   ├── components/              # Sidebar and region selector
-│   ├── utils/                   # Data processing, caching, tectonic loader
-│   └── visualizations/          # Map, time series, correlations, 3D plots
-└── .streamlit/
-    └── config.toml              # UI theme config
+│   ├── api/                   # API calls (Open-Meteo, USGS)
+│   ├── components/            # Sidebar, region selector, map
+│   ├── utils/                 # Data processing, caching, tectonic loading
+│   └── visualizations/        # Plotly/Folium visualizations
+├── data/                      # Optional local tectonic GeoJSON
+├── assets/                    # Screenshots, videos, thumbnails
+└── .streamlit/                # Theme and config
 ```
 
 ---
 
-## 📸 Screenshots
+## 🧠 How It Works
 
-![Map View](assets/screenshot_map.png)
-![Time Series](assets/screenshot_time_series.png)
-![Correlations](assets/screenshot_correlation.png)
-![3D Quake View](assets/screenshot_3d.png)
-
-*(Place your actual screenshot files in an `assets/` folder.)*
+- Location selection → Geocoded using `Geopy`
+- Coordinates → Used to query:
+  - `Open-Meteo` archive for hourly weather
+  - `USGS` for seismic activity within radius
+- All data → Processed, filtered, merged using `Pandas`
+- Displayed using:
+  - `Plotly` (3D, correlation, bar)
+  - `Folium` (interactive map + tectonics)
+- Smart UI behavior via `Streamlit.session_state`
 
 ---
 
-## 🪪 License
+## 💾 Export Options
+
+- Download **Excel** for weather data
+- Download **CSV** for earthquakes
+- Export combined **GeoJSON** of quakes + tectonics
+
+---
+
+## 🧪 Tested With
+
+- Python 3.10
+- Streamlit 1.25+
+- geopandas, plotly, folium, requests, geopy
+
+---
+
+## 📜 License
 
 MIT License © [Sandy SP](https://github.com/sandy-sp)
 
 ---
+
+## 🤝 Connect & Collaborate
+
+- [LinkedIn](https://www.linkedin.com/in/sandeep-paidipati)
+- [GitHub](https://github.com/sandy-sp)
+- [Project README](https://github.com/sandy-sp/art-of-data-analysis/tree/main/projects/weather-quake-dashboard)
