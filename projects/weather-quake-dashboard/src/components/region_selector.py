@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from src.api.usgs_earthquake_api import fetch_earthquake_data
 import pandas as pd
 import plotly.express as px
+import io
 
 @st.cache_data(show_spinner=False)
 def get_country_list():
@@ -34,6 +35,13 @@ def render_region_selector():
 
         st.write(f"📍 Selected: {selected_country} ({latitude:.2f}, {longitude:.2f})")
 
+        # --- Quake Preview Filters ---
+        st.subheader("🎚️ Quake Preview Filters")
+        preview_min_mag = st.slider(
+            "Minimum Magnitude for History Preview",
+            min_value=2.0, max_value=7.0, step=0.1, value=3.5
+        )
+
         # --- Fetch Quake History (last 5 years) ---
         history_start = (datetime.now() - timedelta(days=5*365)).date()
         history_end = datetime.now().date()
@@ -41,7 +49,7 @@ def render_region_selector():
         with st.spinner("📡 Scanning earthquake history..."):
             preview_df = fetch_earthquake_data(
                 str(history_start), str(history_end),
-                min_magnitude=3.5,
+                min_magnitude=preview_min_mag,
                 latitude=latitude,
                 longitude=longitude,
                 max_radius_km=500  # generous for preview
@@ -102,6 +110,30 @@ def render_region_selector():
                     preview_map.zoom_start = 4
 
                 st_folium(preview_map, width=700, height=400)
+
+            # --- Export Preview Data ---
+            st.markdown("### ⬇️ Export Earthquake History")
+            col1, col2 = st.columns(2)
+
+            with col1:
+                csv_data = preview_df.to_csv(index=False)
+                st.download_button(
+                    label="📄 Download as CSV",
+                    data=csv_data,
+                    file_name="quake_history.csv",
+                    mime="text/csv"
+                )
+
+            with col2:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    preview_df.to_excel(writer, index=False, sheet_name='QuakeHistory')
+                st.download_button(
+                    label="📊 Download as Excel",
+                    data=output.getvalue(),
+                    file_name="quake_history.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
         else:
             st.warning("⚠️ No earthquakes found in this region over the past 5 years.")
 
