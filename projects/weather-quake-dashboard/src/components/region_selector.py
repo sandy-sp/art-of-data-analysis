@@ -2,32 +2,40 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
-import pycountry
-import pandas as pd
 from datetime import datetime, timedelta
+import pandas as pd
 from src.api.usgs_earthquake_api import fetch_earthquake_data
 
-@st.cache_data(show_spinner=False)
-def get_country_list():
-    return sorted([country.name for country in pycountry.countries])
+# Predefined US city/state/ZIP examples (extend or make dynamic later)
+US_LOCATIONS = {
+    "New York, NY": "New York, NY, USA",
+    "San Francisco, CA": "San Francisco, CA, USA",
+    "Seattle, WA": "Seattle, WA, USA",
+    "Los Angeles, CA": "Los Angeles, CA, USA",
+    "Chicago, IL": "Chicago, IL, USA",
+    "Miami, FL": "Miami, FL, USA",
+    "Denver, CO": "Denver, CO, USA",
+    "Boston, MA": "Boston, MA, USA",
+    "Houston, TX": "Houston, TX, USA",
+    "Phoenix, AZ": "Phoenix, AZ, USA"
+}
 
 @st.cache_data(show_spinner=False)
-def geocode_country(country_name):
+def geocode_location(query):
     geolocator = Nominatim(user_agent="quake-weather-app")
-    location = geolocator.geocode(country_name, exactly_one=True, timeout=10)
+    location = geolocator.geocode(query, exactly_one=True, timeout=10)
     return (location.latitude, location.longitude) if location else (0, 0)
 
 def render_region_selector():
-    st.subheader("🗺️ Select Analysis Region & View History")
+    st.subheader("🗺️ Select US Region for Analysis")
 
-    country_list = get_country_list()
-    selected_country = st.selectbox("🌍 Choose a Country", country_list, index=country_list.index("Japan"))
-    latitude, longitude = geocode_country(selected_country)
+    location_name = st.selectbox("🏙️ Choose a U.S. City or ZIP", list(US_LOCATIONS.keys()), index=1)
+    query = US_LOCATIONS[location_name]
+    latitude, longitude = geocode_location(query)
 
     st.session_state["latitude"] = latitude
     st.session_state["longitude"] = longitude
 
-    # Filter control panel
     with st.expander("🔧 Filters & Settings", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
@@ -36,7 +44,7 @@ def render_region_selector():
             show_tectonics = st.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_region_selector')
             st.session_state["show_tectonics"] = show_tectonics
 
-    # Fetch 5-year quake history
+    # Preview recent quake history (5 years)
     history_start = (datetime.now() - timedelta(days=5*365)).date()
     history_end = datetime.now().date()
 
@@ -51,7 +59,7 @@ def render_region_selector():
     locations = preview_df[["Latitude", "Longitude"]].dropna().values.tolist()
     m = folium.Map(control_scale=True)
 
-    for i, row in preview_df.iterrows():
+    for _, row in preview_df.iterrows():
         popup = folium.Popup(f"<b>{row['Place']}</b><br>Mag: {row['Magnitude']}<br>Date: {row['Time']}", max_width=250)
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
@@ -66,9 +74,8 @@ def render_region_selector():
         m.fit_bounds(locations)
     else:
         m.location = [latitude, longitude]
-        m.zoom_start = 4
+        m.zoom_start = 5
 
-    # Render map
     st.markdown("### 📍 Earthquake History Map (click for location info)")
     output = st_folium(m, width=1000, height=600)
 
