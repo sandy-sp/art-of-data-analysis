@@ -18,8 +18,8 @@ st.set_page_config(
 
 # Styled Header
 st.markdown("""
-    <h1 style='font-size: 2.4rem; color: #333;'>🌍 Weather & Earthquake Insight Dashboard</h1>
-    <p style='font-size: 1.1rem; color: #555;'>
+    <h1 style='font-size: 2.4rem'>🌍 Weather & Earthquake Insight Dashboard</h1>
+    <p style='font-size: 1.1rem'>
         An interactive Streamlit dashboard for:
         <ul>
             <li>Exploring weather and seismic trends</li>
