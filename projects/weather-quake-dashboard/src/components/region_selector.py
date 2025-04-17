@@ -3,6 +3,9 @@ import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 import pycountry
+from datetime import datetime, timedelta
+from src.api.usgs_earthquake_api import fetch_earthquake_data
+import pandas as pd
 
 @st.cache_data(show_spinner=False)
 def get_country_list():
@@ -29,6 +32,44 @@ def render_region_selector():
         st.session_state["longitude"] = longitude
 
         st.write(f"📍 Selected: {selected_country} ({latitude:.2f}, {longitude:.2f})")
+
+        # --- Fetch Quake History (last 5 years) ---
+        history_start = (datetime.now() - timedelta(days=5*365)).date()
+        history_end = datetime.now().date()
+
+        with st.spinner("📡 Scanning earthquake history..."):
+            preview_df = fetch_earthquake_data(
+                str(history_start), str(history_end),
+                min_magnitude=3.5,
+                latitude=latitude,
+                longitude=longitude,
+                max_radius_km=500  # generous for preview
+            )
+
+        # --- Summarize Available Dates ---
+        if not preview_df.empty:
+            preview_df['Time'] = pd.to_datetime(preview_df['Time'])
+            preview_df['Year-Month'] = preview_df['Time'].dt.to_period('M').astype(str)
+            monthly_summary = preview_df.groupby('Year-Month').size().reset_index(name='Quake Count')
+
+            st.markdown("### 📅 Earthquake History (Last 5 Years)")
+            st.dataframe(monthly_summary, use_container_width=True, hide_index=True)
+
+            # --- Optional: Preview Map of Quakes ---
+            with st.expander("🗺️ View Historical Quake Locations"):
+                preview_map = folium.Map(location=[latitude, longitude], zoom_start=4, control_scale=True)
+                for _, row in preview_df.iterrows():
+                    folium.CircleMarker(
+                        location=[row["Latitude"], row["Longitude"]],
+                        radius=2,
+                        color="red",
+                        fill=True,
+                        fill_opacity=0.5,
+                    ).add_to(preview_map)
+
+                st_folium(preview_map, width=700, height=400)
+        else:
+            st.warning("⚠️ No earthquakes found in this region over the past 5 years.")
 
     with col2:
         st.markdown("🗺️ **Refine location by clicking on the map:**")
