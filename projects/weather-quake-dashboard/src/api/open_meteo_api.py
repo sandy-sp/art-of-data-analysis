@@ -1,12 +1,9 @@
 import requests
 import pandas as pd
 from typing import Tuple
+from src.utils.caching import cached_api_call
 
-def fetch_historical_weather(lat: float, lon: float, start_date: str, end_date: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Fetch historical weather data from Open-Meteo API.
-    Returns a tuple of (hourly_df, daily_df).
-    """
+def _fetch_open_meteo(lat, lon, start_date, end_date):
     base_url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
         "latitude": lat,
@@ -14,8 +11,7 @@ def fetch_historical_weather(lat: float, lon: float, start_date: str, end_date: 
         "start_date": start_date,
         "end_date": end_date,
         "timezone": "auto",
-        "hourly": "temperature_2m,relativehumidity_2m,precipitation,winddirection_10m,windspeed_10m",
-        "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum",
+        "hourly": "temperature_2m,relativehumidity_2m,precipitation"
     }
 
     try:
@@ -24,16 +20,13 @@ def fetch_historical_weather(lat: float, lon: float, start_date: str, end_date: 
         data = response.json()
 
         hourly_df = pd.DataFrame(data.get("hourly", {}))
-        daily_df = pd.DataFrame(data.get("daily", {}))
-
         if not hourly_df.empty:
             hourly_df['time'] = pd.to_datetime(hourly_df['time'])
 
-        if not daily_df.empty:
-            daily_df['time'] = pd.to_datetime(daily_df['time'])
-
-        return hourly_df, daily_df
-
+        return hourly_df
     except Exception as e:
-        print(f"[Open-Meteo] Failed to fetch weather data: {e}")
-        return pd.DataFrame(), pd.DataFrame()
+        print(f"[Open-Meteo API Error]: {e}")
+        return pd.DataFrame()
+
+def fetch_historical_weather(lat: float, lon: float, start_date: str, end_date: str) -> pd.DataFrame:
+    return cached_api_call(_fetch_open_meteo, lat, lon, start_date, end_date)
