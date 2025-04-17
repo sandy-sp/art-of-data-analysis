@@ -5,47 +5,44 @@ import calendar
 def render_sidebar():
     st.sidebar.title("🔧 Settings")
 
-    # Location input
-    st.sidebar.subheader("📍 Location")
-
+    # --- Step 1: Region Selection ---
+    st.sidebar.subheader("1️⃣ Select Region")
     default_lat = st.session_state.get("latitude", 37.7749)
     default_lon = st.session_state.get("longitude", -122.4194)
 
-    latitude = st.sidebar.number_input("Latitude", min_value=-90.0, max_value=90.0, value=default_lat, format="%.4f")
-    longitude = st.sidebar.number_input("Longitude", min_value=-180.0, max_value=180.0, value=default_lon, format="%.4f")
+    latitude = st.sidebar.number_input("Latitude", min_value=-90.0, max_value=90.0,
+                                       value=default_lat, format="%.4f")
+    longitude = st.sidebar.number_input("Longitude", min_value=-180.0, max_value=180.0,
+                                        value=default_lon, format="%.4f")
 
-    # Month and Year input (replaces Start/End Date)
-    st.sidebar.subheader("🗓️ Date (Open-Meteo supports one month only)")
+    # --- Step 2: Month & Year Selection ---
+    st.sidebar.subheader("2️⃣ Select Month & Year")
     current_year = date.today().year
     year = st.sidebar.selectbox("Year", list(range(current_year, current_year - 5, -1)))
-    month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:])
+    month = st.sidebar.selectbox("Month", list(calendar.month_name)[1:], index=date.today().month - 1)
 
-    # Compute start and end date for API
     month_index = list(calendar.month_name).index(month)
     start_date = date(year, month_index, 1)
     end_day = calendar.monthrange(year, month_index)[1]
     end_date = date(year, month_index, end_day)
 
-    # Magnitude filter
-    st.sidebar.subheader("🌋 Earthquake Filter")
-    min_magnitude = st.sidebar.slider("Minimum Magnitude", 0.0, 10.0, 4.0, step=0.1)
+    # --- Step 3: Filters ---
+    st.sidebar.subheader("3️⃣ Set Filters")
+    min_magnitude = st.sidebar.slider("Minimum Earthquake Magnitude", 0.0, 10.0, 4.0, step=0.1)
+    max_distance_km = st.sidebar.slider("Max Distance to Tectonic Boundary (km)", 10, 200, 50, step=10)
 
-    # Limit (USGS API allows up to 20,000, default 500)
-    event_limit = st.sidebar.slider("Max Earthquakes", 10, 2000, 500, step=10)
-
-    # Tectonic toggle
-    st.session_state["show_tectonics"] = st.sidebar.checkbox("Show Tectonic Boundaries", value=True)
-
-    # Fetch data button
-    fetch_btn = st.sidebar.button("📥 Fetch & Analyze")
-    if fetch_btn:
+    # --- Step 4: Data Fetch Button ---
+    st.sidebar.subheader("4️⃣ Fetch Data")
+    if st.sidebar.button("📥 Fetch & Analyze"):
         st.session_state["data_ready"] = True
+        st.session_state["fetch_params"] = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "start_date": start_date,
+            "end_date": end_date,
+            "min_magnitude": min_magnitude,
+            "max_distance_km": max_distance_km
+        }
+        st.sidebar.success("✅ Fetching data...")
 
-    return {
-        "latitude": latitude,
-        "longitude": longitude,
-        "start_date": start_date,
-        "end_date": end_date,
-        "min_magnitude": min_magnitude,
-        "limit": event_limit
-    }
+    return st.session_state.get("fetch_params", None)
