@@ -7,6 +7,10 @@ def render_sidebar():
 
     # --- Step 1: Region Selection ---
     st.sidebar.subheader("1️⃣ Select Region")
+    st.sidebar.subheader("🗺️ Map Options")
+    show_tectonics = st.sidebar.checkbox("Show Tectonic Boundaries", value=True)
+    st.session_state["show_tectonics"] = show_tectonics
+
     default_lat = st.session_state.get("latitude", 37.7749)
     default_lon = st.session_state.get("longitude", -122.4194)
 
@@ -22,6 +26,7 @@ def render_sidebar():
     available_periods = st.session_state.get("available_months", [])
 
     if available_periods:
+        st.caption("🗓️ Only months with earthquake data are shown.")
         selected_period = st.sidebar.selectbox("📆 Select Available Month", available_periods, index=len(available_periods)-1)
         year, month_str = selected_period.split('-')
         month_index = int(month_str)
