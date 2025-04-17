@@ -1,83 +1,50 @@
 import streamlit as st
 import folium
-from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
-from geopy.distance import geodesic
-import requests
 import pycountry
-import geopandas as gpd
-from shapely.geometry import shape
-
-TECTONIC_URL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
 
 @st.cache_data(show_spinner=False)
 def get_country_list():
-    return sorted([c.name for c in pycountry.countries])
+    return sorted([country.name for country in pycountry.countries])
 
 @st.cache_data(show_spinner=False)
-def load_tectonic_geojson():
-    res = requests.get(TECTONIC_URL)
-    res.raise_for_status()
-    return gpd.GeoDataFrame.from_features(res.json()["features"], crs="EPSG:4326")
-
-def geocode_country_center(name: str):
-    try:
-        geolocator = Nominatim(user_agent="quake-weather-app")
-        location = geolocator.geocode(name, exactly_one=True, timeout=10)
-        if location:
-            return location.latitude, location.longitude
-    except Exception as e:
-        st.sidebar.error(f"Geocoding failed: {e}")
-    return 10, 0  # fallback to equator
+def geocode_country(country_name):
+    geolocator = Nominatim(user_agent="quake-weather-app")
+    location = geolocator.geocode(country_name, exactly_one=True, timeout=10)
+    return (location.latitude, location.longitude) if location else (0, 0)
 
 def render_region_selector():
-    st.sidebar.subheader("🌍 Select Region via Tectonic Plates")
+    st.subheader("🌍 Select Region")
 
-    country_list = get_country_list()
-    country = st.sidebar.selectbox("Select Country", country_list, index=country_list.index("Japan"))
-    lat, lon = geocode_country_center(country)
+    col1, col2 = st.columns([1, 2])
 
-    st.sidebar.markdown("Click a plate centroid marker below to set coordinates.")
+    with col1:
+        country_list = get_country_list()
+        selected_country = st.selectbox("🌎 Select Country", country_list, index=country_list.index("Japan"))
+        latitude, longitude = geocode_country(selected_country)
+        
+        # Store selected coordinates in session state
+        st.session_state["latitude"] = latitude
+        st.session_state["longitude"] = longitude
 
-    # Load tectonic data
-    tectonics = load_tectonic_geojson()
+        st.write(f"📍 Selected: {selected_country} ({latitude:.2f}, {longitude:.2f})")
 
-    # Filter and prepare nearby centroids
-    nearby_centroids = []
-    for idx, row in tectonics.iterrows():
-        centroid = shape(row["geometry"]).centroid
-        distance = geodesic((lat, lon), (centroid.y, centroid.x)).km
-        if distance <= 1000:
-            nearby_centroids.append((centroid.y, centroid.x, f"Segment #{idx} ({distance:.0f} km)"))
+    with col2:
+        st.markdown("🗺️ **Refine location by clicking on the map:**")
+        m = folium.Map(location=[latitude, longitude], zoom_start=5, control_scale=True)
+        folium.Marker([latitude, longitude], tooltip="Selected Country Center", icon=folium.Icon(color="blue")).add_to(m)
 
-    # Draw map
-    m = folium.Map(location=[lat, lon], zoom_start=5, control_scale=True)
+        # Allow users to click map to refine coordinates
+        m.add_child(folium.LatLngPopup())
 
-    # Plot centroids as clickable markers
-    for lat_c, lon_c, label in nearby_centroids:
-        folium.Marker(
-            location=[lat_c, lon_c],
-            popup=label,
-            icon=folium.Icon(color='green', icon='map-marker')
-        ).add_to(m)
+        output = st_folium(m, width=700, height=400)
 
-    # Add tectonic boundaries layer
-    folium.GeoJson(
-        tectonics.__geo_interface__,
-        name="Tectonic Boundaries",
-        tooltip=folium.GeoJsonTooltip(fields=[]),
-        highlight_function=lambda x: {"fillColor": "orange", "color": "red"},
-        popup=folium.GeoJsonPopup(fields=[], labels=False)
-    ).add_to(m)
+        # Update coordinates if clicked
+        if output.get("last_clicked"):
+            clicked_lat = output["last_clicked"]["lat"]
+            clicked_lon = output["last_clicked"]["lng"]
+            st.session_state["latitude"] = clicked_lat
+            st.session_state["longitude"] = clicked_lon
+            st.success(f"📌 Refined Coordinates: ({clicked_lat:.4f}, {clicked_lon:.4f})")
 
-    m.add_child(folium.LatLngPopup())
-
-    # Render map and handle user click
-    output = st_folium(m, width=700, height=450)
-    clicked = output.get("last_clicked")
-
-    if clicked:
-        st.session_state["latitude"] = clicked["lat"]
-        st.session_state["longitude"] = clicked["lng"]
-        st.success(f"Selected Coordinates: ({clicked['lat']:.4f}, {clicked['lng']:.4f})")
