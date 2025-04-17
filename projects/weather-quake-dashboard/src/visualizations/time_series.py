@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+from src.utils.exporter import export_dataframe_as_excel, export_dataframe_as_csv
 
 def plot_weather_trends(weather_df):
     if weather_df.empty:
@@ -67,3 +68,20 @@ def display_timeseries(weather_df, quake_df):
         st.plotly_chart(quake_fig, use_container_width=True)
     else:
         st.warning("No earthquake data available.")
+    st.markdown("### ⬇️ Export Raw Data")
+
+    if not weather_df.empty:
+        st.download_button(
+            label="📥 Download Weather Data (Excel)",
+            data=export_dataframe_as_excel(weather_df),
+            file_name="weather_data.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    if not quake_df.empty:
+        st.download_button(
+            label="📥 Download Earthquake Data (CSV)",
+            data=export_dataframe_as_csv(quake_df),
+            file_name="earthquake_data.csv",
+            mime="text/csv"
+        )
