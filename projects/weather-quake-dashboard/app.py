@@ -7,29 +7,32 @@ from src.visualizations.time_series import display_timeseries
 from src.visualizations.correlations import display_correlations
 from src.visualizations.quake_3d import display_3d_quakes
 
-# Page setup
+# Set Streamlit page configuration
 st.set_page_config(
     page_title="🌍 Weather & Earthquake Insight Dashboard",
     page_icon="🌋",
     layout="wide"
 )
 
-# Header
+# Header Content
 st.title("🌍 Weather & Earthquake Insight Dashboard")
 st.markdown("""
-This dashboard integrates **Open-Meteo** and **USGS Earthquake** data to help analyze and visualize:
-- Historical weather trends
-- Seismic activity and clustering
-- Potential correlations
-- 3D depth-based earthquake views
+An interactive Streamlit dashboard for:
+- Exploring weather and seismic trends
+- Correlating earthquake and climate data
+- Analyzing spatial and temporal risk factors
+- Viewing 3D seismic depth visualizations
 """)
 
-# Region & Inputs
+# --- US Region Selector ---
 render_region_selector()
+
+# --- Sidebar Input ---
 fetch_params = render_sidebar()
 
+# --- Data Fetch & Visualization ---
 if fetch_params:
-    with st.spinner("📡 Fetching Data..."):
+    with st.spinner("📡 Fetching Data from APIs..."):
         weather_df = fetch_historical_weather(
             fetch_params['latitude'], fetch_params['longitude'],
             str(fetch_params['start_date']), str(fetch_params['end_date'])
@@ -40,8 +43,8 @@ if fetch_params:
             fetch_params['longitude'], fetch_params['max_distance_km']
         )
 
-    # Visualization Tabs
-    tabs = st.tabs(["📊 Time Series", "🔗 Correlations", "🌐 3D Quakes"])
+    st.markdown("---")
+    tabs = st.tabs(["📈 Time Series", "🔗 Correlations", "🌐 3D Quakes"])
 
     with tabs[0]:
         display_timeseries(weather_df, quake_df)
@@ -53,4 +56,4 @@ if fetch_params:
         display_3d_quakes(quake_df)
 
 else:
-    st.info("👈 Select a region and filters from the sidebar to begin analysis.")
+    st.info("👈 Use the sidebar and region selector to begin analysis.")
