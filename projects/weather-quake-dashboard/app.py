@@ -3,6 +3,8 @@ from src.components.sidebar import render_sidebar
 from src.components.region_selector import render_region_selector
 from src.api.open_meteo_api import fetch_historical_weather
 from src.api.usgs_earthquake_api import fetch_earthquake_data
+from src.utils.tectonic_loader import load_tectonic_boundaries
+from src.utils.exporter import export_quakes_and_boundaries_geojson
 from src.visualizations.time_series import display_timeseries
 from src.visualizations.correlations import display_correlations
 from src.visualizations.quake_3d import display_3d_quakes
@@ -42,6 +44,7 @@ if fetch_params:
             fetch_params['min_magnitude'], fetch_params['latitude'],
             fetch_params['longitude'], fetch_params['max_distance_km']
         )
+        boundary_gdf = load_tectonic_boundaries()
 
     st.markdown("---")
     tabs = st.tabs(["📈 Time Series", "🔗 Correlations", "🌐 3D Quakes"])
@@ -55,5 +58,14 @@ if fetch_params:
     with tabs[2]:
         display_3d_quakes(quake_df)
 
+    st.markdown("### 🗂 Export GeoJSON")
+    if st.button("📤 Download Earthquakes + Boundaries GeoJSON"):
+        geojson_data = export_quakes_and_boundaries_geojson(quake_df, boundary_gdf)
+        st.download_button(
+            label="📎 Save GeoJSON",
+            data=geojson_data,
+            file_name="earthquakes_with_boundaries.geojson",
+            mime="application/geo+json"
+        )
 else:
     st.info("👈 Use the sidebar and region selector to begin analysis.")
