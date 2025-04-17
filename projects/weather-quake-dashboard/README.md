@@ -6,9 +6,6 @@ An interactive Streamlit dashboard integrating **Open-Meteo weather data**, **US
 
 ## 🚀 Features
 
-- 🗺️ **Interactive Map**  
-  View earthquakes and weather overlayed on an interactive Folium map.
-
 - 📊 **Time Series Analysis**  
   Explore trends in temperature, humidity, and earthquake frequency.
 
