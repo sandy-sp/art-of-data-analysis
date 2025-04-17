@@ -1,0 +1,28 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Streamlit-specific
+.streamlit/secrets.toml
+
+# Jupyter & IDE artifacts
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Pytest cache
+.pytest_cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Output artifacts
+*.log
+*.zip
