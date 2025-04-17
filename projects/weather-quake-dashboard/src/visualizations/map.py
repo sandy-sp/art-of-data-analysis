@@ -1,18 +1,33 @@
 import streamlit as st
-from src.components.map_display import display_interactive_map
+import folium
+from folium.plugins import MarkerCluster
+from streamlit_folium import st_folium
 
-def display_map(data_bundle):
-    st.subheader("🗺️ Earthquakes & Weather Map")
+def display_map(weather_df, quake_df, latitude, longitude):
+    st.subheader("🗺️ Interactive Weather & Earthquake Map")
 
-    hourly_df = data_bundle["weather"]
-    quake_df = data_bundle["earthquakes"]
-    inputs = data_bundle["inputs"]
+    # Initialize Map
+    m = folium.Map(location=[latitude, longitude], zoom_start=6, control_scale=True)
 
-    if hourly_df.empty:
-        st.warning("No weather data available for the selected location and time range.")
+    # Earthquake markers
+    quake_cluster = MarkerCluster(name='Earthquakes').add_to(m)
+    for _, quake in quake_df.iterrows():
+        folium.CircleMarker(
+            location=[quake["Latitude"], quake["Longitude"]],
+            radius=quake["Magnitude"] * 2,
+            color="red",
+            fill=True,
+            fill_opacity=0.6,
+            popup=f"📍{quake['Place']}<br>Magnitude: {quake['Magnitude']}<br>Depth: {quake['Depth_km']} km"
+        ).add_to(quake_cluster)
 
-    if quake_df.empty:
-        st.warning("No earthquake data found for the selected location and time range.")
+    # Weather data marker (single location)
+    if not weather_df.empty:
+        folium.Marker(
+            location=[latitude, longitude],
+            icon=folium.Icon(color="blue", icon="cloud"),
+            popup="🌤️ Weather Station"
+        ).add_to(m)
 
-    if not quake_df.empty:
-        display_interactive_map(quake_df, hourly_df, inputs['latitude'], inputs['longitude'])
+    # Render map
+    st_folium(m, width=900, height=500)
