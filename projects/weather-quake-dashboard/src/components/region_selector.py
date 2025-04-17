@@ -6,6 +6,7 @@ import pycountry
 from datetime import datetime, timedelta
 from src.api.usgs_earthquake_api import fetch_earthquake_data
 import pandas as pd
+import plotly.express as px
 
 @st.cache_data(show_spinner=False)
 def get_country_list():
@@ -54,6 +55,18 @@ def render_region_selector():
 
             st.markdown("### 📅 Earthquake History (Last 5 Years)")
             st.dataframe(monthly_summary, use_container_width=True, hide_index=True)
+
+            # --- Historical Trend Chart ---
+            with st.expander("📈 View Earthquake Frequency Trend", expanded=False):
+                fig = px.bar(
+                    monthly_summary,
+                    x="Year-Month",
+                    y="Quake Count",
+                    title="🧨 Earthquakes per Month (Past 5 Years)",
+                    labels={"Year-Month": "Month", "Quake Count": "Number of Events"}
+                )
+                fig.update_layout(xaxis_tickangle=45)
+                st.plotly_chart(fig, use_container_width=True)
 
             # --- Optional: Preview Map of Quakes ---
             with st.expander("🗺️ View Historical Quake Locations"):
