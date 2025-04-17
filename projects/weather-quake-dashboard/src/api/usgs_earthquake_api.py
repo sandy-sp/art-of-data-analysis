@@ -1,21 +1,9 @@
 import requests
 import pandas as pd
 from datetime import datetime
-from typing import Tuple
+from src.utils.caching import cached_api_call
 
-def fetch_earthquake_data(
-    starttime: str,
-    endtime: str,
-    min_magnitude: float,
-    latitude: float,
-    longitude: float,
-    max_radius_km: float = 500,
-    limit: int = 500
-) -> pd.DataFrame:
-    """
-    Fetch earthquake data from USGS Earthquake API.
-    Returns a DataFrame of event information.
-    """
+def _fetch_usgs_earthquake_data(starttime, endtime, min_magnitude, latitude, longitude, max_radius_km):
     url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     params = {
         "format": "geojson",
@@ -25,36 +13,29 @@ def fetch_earthquake_data(
         "latitude": latitude,
         "longitude": longitude,
         "maxradiuskm": max_radius_km,
-        "limit": limit
+        "limit": 500
     }
 
     try:
         response = requests.get(url, params=params, timeout=15)
         response.raise_for_status()
-        data = response.json()
+        features = response.json().get("features", [])
+        
+        records = [{
+            "Time": datetime.utcfromtimestamp(f["properties"]["time"] / 1000).strftime('%Y-%m-%d %H:%M:%S'),
+            "Place": f["properties"]["place"],
+            "Magnitude": f["properties"]["mag"],
+            "Latitude": f["geometry"]["coordinates"][1],
+            "Longitude": f["geometry"]["coordinates"][0],
+            "Depth_km": f["geometry"]["coordinates"][2]
+        } for f in features]
 
-        features = data.get("features", [])
-        records = []
-
-        for feature in features:
-            props = feature.get("properties", {})
-            geom = feature.get("geometry", {})
-            coords = geom.get("coordinates", [None, None, None])
-
-            record = {
-                "Time": datetime.utcfromtimestamp(props.get("time", 0) / 1000).strftime('%Y-%m-%d %H:%M:%S'),
-                "Place": props.get("place", "N/A"),
-                "Magnitude": props.get("mag", 0.0),
-                "Latitude": coords[1],
-                "Longitude": coords[0],
-                "Depth_km": coords[2],
-                "URL": props.get("url", "")
-            }
-            records.append(record)
-
-        df = pd.DataFrame(records)
-        return df
-
+        return pd.DataFrame(records)
     except Exception as e:
-        print(f"[USGS] Failed to fetch earthquake data: {e}")
+        print(f"[USGS API Error]: {e}")
         return pd.DataFrame()
+
+def fetch_earthquake_data(starttime: str, endtime: str, min_magnitude: float,
+                          latitude: float, longitude: float, max_radius_km: float) -> pd.DataFrame:
+    return cached_api_call(_fetch_usgs_earthquake_data, starttime, endtime, min_magnitude,
+                           latitude, longitude, max_radius_km)
