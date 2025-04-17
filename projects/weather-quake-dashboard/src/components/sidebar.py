@@ -8,7 +8,7 @@ def render_sidebar():
     # --- Step 1: Region Selection ---
     st.sidebar.subheader("1️⃣ Select Region")
     st.sidebar.subheader("🗺️ Map Options")
-    show_tectonics = st.sidebar.checkbox("Show Tectonic Boundaries", value=True)
+    show_tectonics = st.sidebar.checkbox("Show Tectonic Boundaries", value=True, key='tectonics_sidebar')
     st.session_state["show_tectonics"] = show_tectonics
 
     default_lat = st.session_state.get("latitude", 37.7749)
