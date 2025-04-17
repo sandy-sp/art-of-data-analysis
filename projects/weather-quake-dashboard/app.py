@@ -8,13 +8,29 @@ from src.visualizations.time_series import display_timeseries
 from src.visualizations.correlations import display_correlations
 from src.visualizations.quake_3d import display_3d_quakes
 
-st.set_page_config(page_title="🌍 Weather & Earthquake Dashboard", layout="wide")
+# Page setup
+st.set_page_config(
+    page_title="🌍 Weather & Earthquake Insight Dashboard",
+    page_icon="🌋",
+    layout="wide"
+)
 
+# Header
+st.title("🌍 Weather & Earthquake Insight Dashboard")
+st.markdown("""
+This dashboard integrates **Open-Meteo** and **USGS Earthquake** data to help analyze and visualize:
+- Historical weather trends
+- Seismic activity and clustering
+- Potential correlations
+- 3D depth-based earthquake views
+""")
+
+# Region & Inputs
 render_region_selector()
 fetch_params = render_sidebar()
 
 if fetch_params:
-    with st.spinner("Fetching Data..."):
+    with st.spinner("📡 Fetching Data..."):
         weather_df = fetch_historical_weather(
             fetch_params['latitude'], fetch_params['longitude'],
             str(fetch_params['start_date']), str(fetch_params['end_date'])
@@ -25,7 +41,8 @@ if fetch_params:
             fetch_params['longitude'], fetch_params['max_distance_km']
         )
 
-    tabs = st.tabs(["🗺️ Map", "📊 Time Series", "🔗 Correlations", "🌐 3D View"])
+    # Visualization Tabs
+    tabs = st.tabs(["🗺️ Map View", "📊 Time Series", "🔗 Correlations", "🌐 3D Quakes"])
 
     with tabs[0]:
         display_map(weather_df, quake_df, fetch_params['latitude'], fetch_params['longitude'])
@@ -38,5 +55,6 @@ if fetch_params:
 
     with tabs[3]:
         display_3d_quakes(quake_df)
+
 else:
-    st.info("👈 Configure and fetch data using sidebar and region selector.")
+    st.info("👈 Select a region and filters from the sidebar to begin analysis.")
