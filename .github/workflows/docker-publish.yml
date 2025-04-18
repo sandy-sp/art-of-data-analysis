@@ -40,7 +40,7 @@ jobs:
               echo "No projects with Dockerfiles found."
               exit 1
           fi
-          echo "projects=$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\n\")[:-1]')" >> $GITHUB_OUTPUT
+          echo "::set-output name=projects::$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\n\")[:-1]')"
         outputs:
           projects: ${{ steps.find-projects.outputs.projects }}
 
