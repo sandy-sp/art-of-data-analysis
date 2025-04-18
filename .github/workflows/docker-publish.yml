@@ -45,10 +45,6 @@ jobs:
           PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]')
           echo "::set-output name=projects::$PROJECTS_JSON"
 
-      # Step 6: Debug project output
-      - name: Debug project output
-        run: echo "Projects: ${{ steps.find-projects.outputs.projects }}"
-
   build-and-push:
     needs: publish
     runs-on: ubuntu-latest
