@@ -3,7 +3,7 @@ name: Publish Docker Images
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main
 
 jobs:
   publish:
@@ -11,78 +11,66 @@ jobs:
     outputs:
       projects: ${{ steps.find-projects.outputs.projects }}
     steps:
-      # Step 1: Checkout the repository
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # Step 4: Login to GitHub Packages
-      - name: Login to GitHub Packages
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 5: Find all projects with Dockerfiles
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Find projects with Dockerfiles
         id: find-projects
         run: |
           PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \; -print)
           if [ -z "$PROJECTS" ]; then
-              echo "No projects with Dockerfiles found."
-              exit 1
+              echo "No Docker projects found."
+              echo "projects=[]" >> "$GITHUB_OUTPUT"
+          else
+              PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]')
+              echo "projects=$PROJECTS_JSON" >> "$GITHUB_OUTPUT"
           fi
-          PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]')
-          echo "projects=$PROJECTS_JSON" >> $GITHUB_OUTPUT
 
   build-and-push:
     needs: publish
+    if: needs.publish.outputs.projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         project: ${{ fromJson(needs.publish.outputs.projects) }}
     steps:
-      # Step 1: Checkout the repository
       - uses: actions/checkout@v3
 
-      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Debug project variables
-      - name: Debug project variables
+      - name: Build and Push Docker Images
         run: |
-          echo "Project: ${{ matrix.project }}"
-          echo "Project Name: $(basename '${{ matrix.project }}')"
-          echo "Docker Hub Image: ${{ secrets.DOCKERHUB_USERNAME }}/$(basename '${{ matrix.project }}')"
-          echo "GitHub Container Registry Image: ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/$(basename '${{ matrix.project }}')"
-
-      # Step 4: Build and push Docker images
-      - name: Build and push Docker images
-        run: |
-          set -e
-          PROJECT=${{ matrix.project }}
+          PROJECT="${{ matrix.project }}"
           PROJECT_NAME=$(basename "$PROJECT")
-          IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}"
-          IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/${PROJECT_NAME}"
           TAG="${GITHUB_SHA::7}"
+          DOCKERHUB_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}:${TAG}"
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/${PROJECT_NAME}:${TAG}"
 
-          echo "Building Docker image for Docker Hub: $IMAGE_NAME_DOCKERHUB:$TAG"
-          docker build --cache-from=type=registry,ref=${IMAGE_NAME_DOCKERHUB}:${TAG} -t ${IMAGE_NAME_DOCKERHUB}:${TAG} "$PROJECT" || exit 1
+          echo "🔨 Building $PROJECT_NAME"
+          docker build -t "$DOCKERHUB_IMAGE" "$PROJECT"
+          docker tag "$DOCKERHUB_IMAGE" "$GHCR_IMAGE"
 
-          echo "Pushing Docker image to Docker Hub"
-          docker push ${IMAGE_NAME_DOCKERHUB}:${TAG} || exit 1
+          echo "📤 Pushing to Docker Hub"
+          docker push "$DOCKERHUB_IMAGE"
 
-          echo "Tagging and pushing Docker image to GitHub Packages: $IMAGE_NAME_GHCR:$TAG"
-          docker tag ${IMAGE_NAME_DOCKERHUB}:${TAG} ${IMAGE_NAME_GHCR}:${TAG}
-          docker push ${IMAGE_NAME_GHCR}:${TAG} || exit 1
+          echo "📤 Pushing to GitHub Container Registry"
+          docker push "$GHCR_IMAGE"
