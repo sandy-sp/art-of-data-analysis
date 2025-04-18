@@ -8,6 +8,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.find-projects.outputs.projects }}
     steps:
       # Step 1: Checkout the repository
       - uses: actions/checkout@v3
@@ -40,17 +42,12 @@ jobs:
               echo "No projects with Dockerfiles found."
               exit 1
           fi
-          echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]' > $GITHUB_ENV
-          echo "projects=${PROJECTS}" >> $GITHUB_ENV
-              echo "No projects with Dockerfiles found."
-              exit 1
-          fi
-          echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]' > $GITHUB_ENV
-          echo "projects=${PROJECTS}" >> $GITHUB_ENV  
+          PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]')
+          echo "::set-output name=projects::$PROJECTS_JSON"
 
       # Step 6: Debug project output
       - name: Debug project output
-        run: echo "projects=${{ steps.find-projects.outputs.projects }}" >> $GITHUB_ENV
+        run: echo "Projects: ${{ steps.find-projects.outputs.projects }}"
 
   build-and-push:
     needs: publish
