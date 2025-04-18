@@ -67,16 +67,17 @@ jobs:
           set -e
           PROJECT="${{ matrix.project }}"
           PROJECT_NAME=$(basename "$PROJECT")
-          IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}"
-          IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/${PROJECT_NAME}"
           TAG="${GITHUB_SHA::7}"
 
-          echo "Building Docker image: $IMAGE_NAME_DOCKERHUB:$TAG"
-          docker build -t "$IMAGE_NAME_DOCKERHUB:$TAG" "$PROJECT"
+          IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}:${TAG}"
+          IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/${PROJECT_NAME}:${TAG}"
+
+          echo "Building Docker image: $IMAGE_NAME_DOCKERHUB"
+          docker build -t "$IMAGE_NAME_DOCKERHUB" "$PROJECT"
 
           echo "Pushing to Docker Hub"
-          docker push "$IMAGE_NAME_DOCKERHUB:$TAG"
+          docker push "$IMAGE_NAME_DOCKERHUB"
 
-          echo "Tagging for GHCR"
-          docker tag "$IMAGE_NAME_DOCKERHUB:$TAG" "$IMAGE_NAME_GHCR:$TAG"
-          docker push "$IMAGE_NAME_GHCR:$TAG"
+          echo "Tagging and pushing to GHCR"
+          docker tag "$IMAGE_NAME_DOCKERHUB" "$IMAGE_NAME_GHCR"
+          docker push "$IMAGE_NAME_GHCR"
