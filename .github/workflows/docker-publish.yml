@@ -35,16 +35,17 @@ jobs:
       - name: Find projects with Dockerfiles
         id: find-projects
         run: |
-          PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \; -print)
+          PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \\; -print)
           if [ -z "$PROJECTS" ]; then
               echo "No projects with Dockerfiles found."
               exit 1
           fi
           echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]' > $GITHUB_ENV
+          echo "projects=${PROJECTS}" >> $GITHUB_ENV  
 
       # Step 6: Debug project output
       - name: Debug project output
-        run: echo "Projects: ${{ env.projects }}"
+        run: echo "projects=${{ steps.find-projects.outputs.projects }}" >> $GITHUB_ENV
 
   build-and-push:
     needs: publish
