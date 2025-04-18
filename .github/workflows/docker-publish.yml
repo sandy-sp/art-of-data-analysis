@@ -41,6 +41,8 @@ jobs:
               exit 1
           fi
           echo "projects=$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\n\")[:-1]')" >> $GITHUB_OUTPUT
+        outputs:
+          projects: ${{ steps.find-projects.outputs.projects }}
 
       # Step 6: Debug project output
       - name: Debug project output
