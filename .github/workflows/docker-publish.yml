@@ -40,9 +40,7 @@ jobs:
               echo "No projects with Dockerfiles found."
               exit 1
           fi
-          echo "::set-output name=projects::$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\n\")[:-1]')"
-        outputs:
-          projects: ${{ steps.find-projects.outputs.projects }}
+          echo "::set-output name=projects::$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\\n\")[:-1]')"
 
       # Step 6: Debug project output
       - name: Debug project output
