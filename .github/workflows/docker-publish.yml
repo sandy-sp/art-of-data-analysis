@@ -36,32 +36,44 @@ jobs:
         id: find-projects
         run: |
           PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \; -print)
+          if [ -z "$PROJECTS" ]; then
+              echo "No projects with Dockerfiles found."
+              exit 1
+          fi
           echo "projects=$(echo \"$PROJECTS\" | jq -R -s -c 'split(\"\n\")[:-1]')" >> $GITHUB_OUTPUT
 
-      # Step 6: Build and push Docker images for each project
+      # Step 6: Debug project output
+      - name: Debug project output
+        run: echo "Projects: ${{ steps.find-projects.outputs.projects }}"
+
+  build-and-push:
+    needs: publish
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJson(needs.publish.outputs.projects) }}
+    steps:
+      # Step 1: Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Build and push Docker images
       - name: Build and push Docker images
-        if: steps.find-projects.outputs.projects != '[]'
         run: |
-          PROJECTS=$(echo ${{ steps.find-projects.outputs.projects }} | jq -r .[])
-          echo "Projects found: $PROJECTS"
-          for PROJECT in $PROJECTS; do
-            echo "Processing project: $PROJECT"
+          set -e
+          PROJECT=${{ matrix.project }}
+          PROJECT_NAME=$(basename "$PROJECT")
+          IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}"
+          IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/${PROJECT_NAME}"
+          TAG="${GITHUB_SHA::7}"
 
-            # Extract project name
-            PROJECT_NAME=$(basename "$PROJECT")
+          echo "Building Docker image for Docker Hub: $IMAGE_NAME_DOCKERHUB:$TAG"
+          docker build --cache-from=type=registry,ref=${IMAGE_NAME_DOCKERHUB}:${TAG} -t ${IMAGE_NAME_DOCKERHUB}:${TAG} "$PROJECT"
+          docker push ${IMAGE_NAME_DOCKERHUB}:${TAG}
 
-            # Define image names
-            IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/${PROJECT_NAME}"
-            IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/art-of-data-analysis/${PROJECT_NAME}"
-            TAG="latest"
-
-            # Build and push to Docker Hub
-            echo "Building Docker image for Docker Hub: $IMAGE_NAME_DOCKERHUB:$TAG"
-            docker build -t ${IMAGE_NAME_DOCKERHUB}:${TAG} "$PROJECT"
-            docker push ${IMAGE_NAME_DOCKERHUB}:${TAG}
-
-            # Tag and push to GitHub Packages
-            echo "Tagging and pushing Docker image to GitHub Packages: $IMAGE_NAME_GHCR:$TAG"
-            docker tag ${IMAGE_NAME_DOCKERHUB}:${TAG} ${IMAGE_NAME_GHCR}:${TAG}
-            docker push ${IMAGE_NAME_GHCR}:${TAG}
-          done
+          echo "Tagging and pushing Docker image to GitHub Packages: $IMAGE_NAME_GHCR:$TAG"
+          docker tag ${IMAGE_NAME_DOCKERHUB}:${TAG} ${IMAGE_NAME_GHCR}:${TAG}
+          docker push ${IMAGE_NAME_GHCR}:${TAG}
