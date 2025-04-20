@@ -8,3 +8,4 @@ statsmodels
 jupyterlab
 mplfinance
 streamlit
+joblib
