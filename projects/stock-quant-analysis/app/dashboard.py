@@ -8,7 +8,7 @@ from src.features.indicators import (
 from src.viz.charts import plot_price, plot_candlestick
 import os
 import tempfile
-from src.model.predictor import load_model, prepare_features  # Added import
+from src.model.predictor import load_model, prepare_features
 
 def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
@@ -45,10 +45,10 @@ def main():
                     df = add_ema_crossover(df)
 
                     fig = plot_price(df, ticker)
-                    st.pyplot(fig)
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-                        plot_candlestick(df, ticker, filename=tmpfile.name)
-                        st.image(tmpfile.name, caption=f"{ticker} Candlestick Chart")
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    candle_fig = plot_candlestick(df, ticker)
+                    st.plotly_chart(candle_fig, use_container_width=True)
 
                     summary = get_summary_metrics(df)
                     summary["Ticker"] = ticker
@@ -79,8 +79,8 @@ def main():
                 df = add_rsi(df)
                 df = add_macd(df)
                 df = add_ema_crossover(df)
-                df.dropna(inplace=True)
 
+                df.dropna(inplace=True)
                 X = prepare_features(df)
                 X_test = X.iloc[-30:]
                 preds = model.predict(X_test)
@@ -90,7 +90,15 @@ def main():
                 pred_df = df[["Close"]].iloc[-30:].copy()
                 pred_df["Predicted"] = preds
                 st.subheader("📊 Actual vs Predicted")
-                st.line_chart(pred_df)
+
+                # Plot with Plotly
+                from plotly.graph_objs import Scatter, Layout, Figure
+                fig = Figure(data=[
+                    Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
+                    Scatter(x=pred_df.index, y=pred_df['Predicted'], name='Predicted')
+                ])
+                fig.update_layout(title=f"{pred_ticker} - Actual vs Predicted")
+                st.plotly_chart(fig, use_container_width=True)
 
                 pred_csv = pred_df.reset_index().to_csv(index=False).encode("utf-8")
                 st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=f"{pred_ticker}_predictions.csv", mime="text/csv")
