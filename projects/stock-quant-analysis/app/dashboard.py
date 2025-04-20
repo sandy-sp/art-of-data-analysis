@@ -17,7 +17,10 @@ def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
 
     st.title("📊 Stock Quantitative Analysis")
-    st.markdown("💡 Tip: For best viewing, switch to wide layout or dark mode in settings (⚙️ top-right)")
+    st.markdown(
+        "⚠️ **Note**: The data fetched using `yfinance` may be delayed by up to 1–3 days. "
+        "This is a known limitation of free Yahoo Finance and reflects delayed market data. "
+    )
 
     if st.button("🔁 Reset"):
         try:
@@ -60,11 +63,11 @@ def main():
                     df = add_macd(df)
                     df = add_ema_crossover(df)
 
-                    fig = plot_price(df, ticker)
-                    st.plotly_chart(fig, use_container_width=True)
-
                     candle_fig = plot_candlestick(df, ticker)
                     st.plotly_chart(candle_fig, use_container_width=True)
+
+                    fig = plot_price(df, ticker)
+                    st.plotly_chart(fig, use_container_width=True)
 
                     metrics = get_summary_metrics(df)
                     summary_data.append({"Ticker": ticker, **metrics})
