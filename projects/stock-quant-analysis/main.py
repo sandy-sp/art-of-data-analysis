@@ -5,9 +5,12 @@ from src.features.indicators import (
 )
 from src.viz.charts import plot_price, plot_candlestick
 import pandas as pd
+import subprocess
 import os
 
 def process_ticker(ticker):
+    # Ensure model is trained via CLI
+    subprocess.run(["python", "train_model.py", ticker], check=True)
     df = fetch_data(ticker)
     df = add_moving_average(df)
     df = daily_returns(df)
