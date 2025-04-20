@@ -1,58 +1,30 @@
-name: Publish Docker Images
+name: CI - Build & Push Docker Images
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'projects/**/Dockerfile'
 
 jobs:
-  publish:
+  discover-projects:
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.find-changed-dockerfiles.outputs.changed }}
+      matrix: ${{ steps.set.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Find changed Dockerfiles
-        id: find-changed-dockerfiles
+      - name: Set Docker project matrix
+        id: set
         run: |
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'projects/.*/Dockerfile' || true)
-          echo "$CHANGED"
-          if [ -z "$CHANGED" ]; then
-            echo "changed=[]" >> "$GITHUB_OUTPUT"
-          else
-            CHANGED_JSON=$(echo "$CHANGED" | xargs -n1 dirname | jq -R -s -c 'split("\n")[:-1]')
-            echo "changed=$CHANGED_JSON" >> "$GITHUB_OUTPUT"
-          fi
+          projects=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f "{}/Dockerfile" \; -print | sed 's|projects/||' | jq -R . | jq -s .)
+          echo "matrix={\"project\": $projects}" >> $GITHUB_OUTPUT
 
   build-and-push:
-    needs: publish
-    if: needs.publish.outputs.changed != '[]'
+    needs: discover-projects
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        project: ${{ fromJson(needs.publish.outputs.changed) }}
+      matrix: ${{ fromJson(needs.discover-projects.outputs.matrix) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
 
@@ -72,26 +44,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker images
+      - name: Build and push for ${{ matrix.project }}
         run: |
-          set -e
-          PROJECT="${{ matrix.project }}"
-          PROJECT_NAME=$(basename "$PROJECT")
-          TAG="${GITHUB_SHA::7}"
+          PROJECT=projects/${{ matrix.project }}
+          NAME=${{ matrix.project }}
+          TAG=${GITHUB_SHA::7}
 
-          IMAGE_NAME_DOCKERHUB="${{ secrets.DOCKERHUB_USERNAME }}/$PROJECT_NAME"
-          IMAGE_NAME_GHCR="ghcr.io/${{ github.repository_owner }}/$PROJECT_NAME"
+          DOCKERHUB_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${NAME}:${TAG}
+          GHCR_IMAGE=ghcr.io/${{ github.repository_owner }}/${NAME}:${TAG}
 
-          echo "Building Docker image: $IMAGE_NAME_DOCKERHUB:$TAG"
-          docker build -t "$IMAGE_NAME_DOCKERHUB:$TAG" "$PROJECT"
-          docker tag "$IMAGE_NAME_DOCKERHUB:$TAG" "$IMAGE_NAME_DOCKERHUB:latest"
+          echo "🛠 Building $NAME..."
+          docker build -t $DOCKERHUB_IMAGE $PROJECT
 
-          echo "Pushing to Docker Hub"
-          docker push "$IMAGE_NAME_DOCKERHUB:$TAG"
-          docker push "$IMAGE_NAME_DOCKERHUB:latest"
+          echo "🚀 Pushing to Docker Hub: $DOCKERHUB_IMAGE"
+          docker push $DOCKERHUB_IMAGE
 
-          echo "Tagging and pushing to GHCR"
-          docker tag "$IMAGE_NAME_DOCKERHUB:$TAG" "$IMAGE_NAME_GHCR:$TAG"
-          docker tag "$IMAGE_NAME_DOCKERHUB:latest" "$IMAGE_NAME_GHCR:latest"
-          docker push "$IMAGE_NAME_GHCR:$TAG"
-          docker push "$IMAGE_NAME_GHCR:latest"
+          echo "📦 Tagging and pushing to GHCR: $GHCR_IMAGE"
+          docker tag $DOCKERHUB_IMAGE $GHCR_IMAGE
+          docker push $GHCR_IMAGE
+
+      - name: Optionally push latest tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          LATEST_TAG=${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.project }}:latest
+          GHCR_LATEST=ghcr.io/${{ github.repository_owner }}/${{ matrix.project }}:latest
+
+          docker tag $DOCKERHUB_IMAGE $LATEST_TAG
+          docker push $LATEST_TAG
+
+          docker tag $DOCKERHUB_IMAGE $GHCR_LATEST
+          docker push $GHCR_LATEST
