@@ -1,30 +1,32 @@
-# Dockerfile for weather_quake_dashboard project
+# Use official Python slim image
 FROM python:3.10-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Set working directory
+# Set work directory
 WORKDIR /app
 
-# System dependencies (geopandas & folium needs)
-RUN apt-get update && apt-get install -y \
+# Install system dependencies for geopandas, folium, plotly, etc.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    gdal-bin \
-    python3-dev \
     libgdal-dev \
+    gdal-bin \
+    libspatialindex-dev \
+    libgl1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy app source code
+# Copy entire project
 COPY . .
 
-# Expose Streamlit default port
+# Expose the default Streamlit port
 EXPOSE 8501
 
-# Streamlit run command
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.enableCORS=false"]
+# Run the app
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
