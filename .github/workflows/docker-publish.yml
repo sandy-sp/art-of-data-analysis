@@ -35,14 +35,14 @@ jobs:
       - name: Find projects with Dockerfiles
         id: find-projects
         run: |
-          PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/Dockerfile' \; -print)
+          PROJECTS=$(find projects -mindepth 1 -maxdepth 1 -type d -exec test -f "{}/Dockerfile" \; -print)
           if [ -z "$PROJECTS" ]; then
               echo "No Docker projects found."
               echo "projects=[]" >> "$GITHUB_OUTPUT"
           else
               PROJECTS_JSON=$(echo "$PROJECTS" | jq -R -s -c 'split("\n")[:-1]')
               echo "projects=$PROJECTS_JSON" >> "$GITHUB_OUTPUT"
-          fi
+          fi    
 
   build-and-push:
     needs: publish
