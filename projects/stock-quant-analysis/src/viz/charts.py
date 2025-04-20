@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 
 def plot_price(df, ticker):
-    import matplotlib.pyplot as plt
-
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
 
     # Price + EMAs
@@ -38,7 +36,7 @@ def plot_price(df, ticker):
         ax3.grid(True)
 
     plt.tight_layout()
-    plt.show()
+    return fig
 
 def plot_candlestick(df, ticker, filename=None):
     df_candle = df.copy()
