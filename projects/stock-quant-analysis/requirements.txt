@@ -10,3 +10,5 @@ mplfinance
 streamlit
 joblib
 plotly
+scikit-learn
+kaleido
