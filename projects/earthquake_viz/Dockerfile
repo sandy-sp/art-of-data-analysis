@@ -1,4 +1,4 @@
-# Use official Python image
+# Dockerfile for Earthquake Visualization Project
 FROM python:3.9-slim
 
 # Set working directory
