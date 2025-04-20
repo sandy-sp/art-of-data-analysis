@@ -44,7 +44,8 @@ def main():
                     df = add_macd(df)
                     df = add_ema_crossover(df)
 
-                    st.pyplot(plot_price(df, ticker))
+                    fig = plot_price(df, ticker)
+                    st.pyplot(fig)
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
                         plot_candlestick(df, ticker, filename=tmpfile.name)
                         st.image(tmpfile.name, caption=f"{ticker} Candlestick Chart")
@@ -92,17 +93,17 @@ def main():
                 st.line_chart(pred_df)
 
                 pred_csv = pred_df.reset_index().to_csv(index=False).encode("utf-8")
-                st.download_button("\ud83d\udcc5 Download Predictions CSV", data=pred_csv, file_name=f"{pred_ticker}_predictions.csv", mime="text/csv")
+                st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=f"{pred_ticker}_predictions.csv", mime="text/csv")
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
 
     with tab3:
         if "summary_df" in st.session_state:
-            st.subheader("\ud83d\udccb Export Summary")
+            st.subheader("📋 Export Summary")
             st.dataframe(st.session_state["summary_df"])
 
             csv = st.session_state["summary_df"].to_csv(index=False).encode('utf-8')
-            st.download_button("\ud83d\udcc5 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
+            st.download_button("📅 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
         else:
             st.info("Run analysis first to see summary table here.")
 
