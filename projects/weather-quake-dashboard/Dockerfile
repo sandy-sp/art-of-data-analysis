@@ -1,4 +1,4 @@
-# Use a slim Python base
+# Dockerfile for weather_quake_dashboard project
 FROM python:3.10-slim
 
 # Set environment variables
