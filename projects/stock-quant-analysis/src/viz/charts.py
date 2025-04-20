@@ -1,54 +1,56 @@
-import matplotlib.pyplot as plt
-import mplfinance as mpf
+import plotly.graph_objs as go
+import plotly.subplots as sp
 
 def plot_price(df, ticker):
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+    fig = sp.make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.1,
+                           subplot_titles=(f"{ticker} Price with EMAs & Bollinger Bands", "RSI", "MACD"))
 
-    # Price + EMAs
-    ax1.plot(df['Close'], label='Close', color='black')
+    # Price with EMAs & BB
+    fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close', line=dict(color='black')), row=1, col=1)
     if 'EMA_9' in df.columns:
-        ax1.plot(df['EMA_9'], label='EMA 9', linestyle='--', color='orange')
+        fig.add_trace(go.Scatter(x=df.index, y=df['EMA_9'], name='EMA 9', line=dict(dash='dash', color='orange')), row=1, col=1)
     if 'EMA_21' in df.columns:
-        ax1.plot(df['EMA_21'], label='EMA 21', linestyle='--', color='blue')
+        fig.add_trace(go.Scatter(x=df.index, y=df['EMA_21'], name='EMA 21', line=dict(dash='dash', color='blue')), row=1, col=1)
     if 'BB_Upper' in df.columns:
-        ax1.plot(df['BB_Upper'], label='Upper BB', linestyle=':', color='green')
-        ax1.plot(df['BB_Lower'], label='Lower BB', linestyle=':', color='red')
-    ax1.set_title(f"{ticker} Price with EMAs & Bollinger Bands")
-    ax1.legend()
-    ax1.grid(True)
+        fig.add_trace(go.Scatter(x=df.index, y=df['BB_Upper'], name='Upper BB', line=dict(dash='dot', color='green')), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df.index, y=df['BB_Lower'], name='Lower BB', line=dict(dash='dot', color='red')), row=1, col=1)
 
     # RSI
     if 'RSI' in df.columns:
-        ax2.plot(df['RSI'], label='RSI', color='purple')
-        ax2.axhline(70, color='red', linestyle='--')
-        ax2.axhline(30, color='green', linestyle='--')
-        ax2.set_title('RSI')
-        ax2.legend()
-        ax2.grid(True)
+        fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], name='RSI', line=dict(color='purple')), row=2, col=1)
+        fig.add_hline(y=70, line=dict(dash='dash', color='red'), row=2, col=1)
+        fig.add_hline(y=30, line=dict(dash='dash', color='green'), row=2, col=1)
 
     # MACD
     if 'MACD' in df.columns and 'MACD_Signal' in df.columns:
-        ax3.plot(df['MACD'], label='MACD', color='teal')
-        ax3.plot(df['MACD_Signal'], label='Signal Line', color='magenta', linestyle='--')
-        ax3.axhline(0, color='gray', linestyle='--')
-        ax3.set_title('MACD')
-        ax3.legend()
-        ax3.grid(True)
+        fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], name='MACD', line=dict(color='teal')), row=3, col=1)
+        fig.add_trace(go.Scatter(x=df.index, y=df['MACD_Signal'], name='Signal Line', line=dict(dash='dash', color='magenta')), row=3, col=1)
+        fig.add_hline(y=0, line=dict(dash='dash', color='gray'), row=3, col=1)
 
-    plt.tight_layout()
+    fig.update_layout(height=900, width=1000, showlegend=True)
     return fig
 
-def plot_candlestick(df, ticker, filename=None):
-    df_candle = df.copy()
-    df_candle.index.name = 'Date'
-    df_candle = df_candle[['Open', 'High', 'Low', 'Close', 'Volume']]
 
-    mpf.plot(
-        df_candle,
-        type='candle',
-        mav=(9, 21),
-        volume=True,
-        title=f'{ticker} Candlestick Chart',
-        style='yahoo',
-        savefig=filename if filename else None
+def plot_candlestick(df, ticker, filename=None):
+    fig = go.Figure(data=[
+        go.Candlestick(
+            x=df.index,
+            open=df['Open'],
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            name='Candlestick'
+        )
+    ])
+
+    fig.update_layout(
+        title=f"{ticker} Candlestick Chart",
+        xaxis_title="Date",
+        yaxis_title="Price",
+        xaxis_rangeslider_visible=False
     )
+
+    if filename:
+        fig.write_image(filename)
+
+    return fig
