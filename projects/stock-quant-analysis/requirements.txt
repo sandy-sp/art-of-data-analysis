@@ -1,14 +1,26 @@
-yfinance
+# Core Data Handling
 pandas
 numpy
+yfinance
+
+# Visualization
+plotly
 matplotlib
 seaborn
-scipy
-statsmodels
-jupyterlab
-mplfinance
+kaleido   # for saving plotly charts as images
+
+# Streamlit Dashboard
 streamlit
-joblib
-plotly
+
+# Machine Learning
 scikit-learn
-kaleido
+joblib
+
+# Notebook Automation
+papermill
+
+# Development Tools (optional but recommended)
+jupyterlab
+
+# System & Utilities
+python-dotenv  # optional, for future config/env
