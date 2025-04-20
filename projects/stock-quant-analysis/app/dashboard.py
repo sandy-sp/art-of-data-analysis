@@ -8,6 +8,7 @@ from src.features.indicators import (
 from src.viz.charts import plot_price, plot_candlestick
 from src.model.predictor import load_model, prepare_features
 import os
+import shutil
 import papermill as pm
 from datetime import datetime
 from plotly.graph_objs import Scatter, Figure
@@ -17,6 +18,15 @@ def main():
 
     st.title("📊 Stock Quantitative Analysis")
     st.markdown("💡 Tip: For best viewing, switch to wide layout or dark mode in settings (⚙️ top-right)")
+
+    if st.button("🔁 Reset"):
+        try:
+            shutil.rmtree("artifacts")
+            st.success("✅ artifacts/ folder deleted.")
+        except FileNotFoundError:
+            st.info("ℹ️ artifacts/ folder does not exist.")
+        except Exception as e:
+            st.error(f"❌ Failed to delete artifacts/: {e}")
 
     tickers_input = st.text_input(
         "Enter stock tickers",
