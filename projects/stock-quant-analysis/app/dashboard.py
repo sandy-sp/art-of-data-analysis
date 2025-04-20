@@ -23,10 +23,9 @@ def main():
         help="Separate multiple tickers with commas (no spaces)"
     )
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2 = st.tabs([
         "📈 Technical Analysis",
-        "🤖 ML Predictions",
-        "📋 Summary & Export"
+        "🤖 ML Predictions"
     ])
 
     with tab1:
@@ -38,6 +37,7 @@ def main():
         )
         if st.button("Run Analysis"):
             tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+            summary_data = []
             for ticker in tickers:
                 try:
                     st.subheader(f"📈 {ticker} Analysis")
@@ -54,8 +54,25 @@ def main():
 
                     candle_fig = plot_candlestick(df, ticker)
                     st.plotly_chart(candle_fig, use_container_width=True)
+
+                    # Collect summary metrics
+                    metrics = get_summary_metrics(df)
+                    summary_data.append({"Ticker": ticker, **metrics})
                 except Exception as e:
                     st.error(f"Failed to process {ticker}: {e}")
+
+            # Display summary table
+            if summary_data:
+                st.subheader("📋 Summary Table")
+                summary_df = pd.DataFrame(summary_data)
+                st.dataframe(summary_df)
+
+                # Save summary to session state for export
+                st.session_state["summary_df"] = summary_df
+
+                # Export summary as CSV
+                csv = summary_df.to_csv(index=False).encode('utf-8')
+                st.download_button("📅 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
 
     with tab2:
         st.subheader("📉 Predict Next-Day Close")
@@ -111,16 +128,6 @@ def main():
                 st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=filename, mime="text/csv")
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
-
-    with tab3:
-        if "summary_df" in st.session_state:
-            st.subheader("📋 Export Summary")
-            st.dataframe(st.session_state["summary_df"])
-
-            csv = st.session_state["summary_df"].to_csv(index=False).encode('utf-8')
-            st.download_button("📅 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
-        else:
-            st.info("Run analysis first to see summary table here.")
 
 if __name__ == "__main__":
     main()
