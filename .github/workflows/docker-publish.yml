@@ -51,7 +51,7 @@ jobs:
           TAG=${GITHUB_SHA::7}
 
           DOCKERHUB_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${NAME}:${TAG}
-          GHCR_IMAGE=ghcr.io/${{ github.repository_owner }}/${NAME}:${TAG}
+          GHCR_IMAGE=ghcr.io/${{ github.actor }}/${NAME}:${TAG}
 
           echo "🛠 Building $NAME..."
           docker build -t $DOCKERHUB_IMAGE $PROJECT
@@ -67,7 +67,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           LATEST_TAG=${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.project }}:latest
-          GHCR_LATEST=ghcr.io/${{ github.repository_owner }}/${{ matrix.project }}:latest
+          GHCR_LATEST=ghcr.io/${{ github.actor }}/${{ matrix.project }}:latest
 
           docker tag $DOCKERHUB_IMAGE $LATEST_TAG
           docker push $LATEST_TAG
