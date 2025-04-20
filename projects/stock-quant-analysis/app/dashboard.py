@@ -22,12 +22,7 @@ def main():
         help="Separate multiple tickers with commas (no spaces)"
     )
 
-    time_range = st.selectbox(
-        "Select time range for analysis",
-        options=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"],
-        index=3,
-        help="Defines how much historical data is pulled"
-    )
+    
 
     tab1, tab2, tab3 = st.tabs([
         "📈 Technical Analysis",
@@ -36,6 +31,12 @@ def main():
     ])
 
     with tab1:
+        time_range = st.selectbox(
+            "Select time range for analysis",
+            options=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"],
+            index=3,
+            help="Defines how much historical data is pulled"
+        )
         if st.button("Run Analysis"):
             tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
             for ticker in tickers:
