@@ -9,6 +9,7 @@ from src.viz.charts import plot_price, plot_candlestick
 from src.model.predictor import load_model, prepare_features
 import os
 import papermill as pm
+from datetime import datetime
 
 def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
@@ -70,13 +71,13 @@ def main():
                 if not os.path.exists(model_path):
                     st.info(f"📓 Training model for {pred_ticker}...")
                     pm.execute_notebook(
-                        "notebooks/stock_predictor_papermill.ipynb",
-                        f"notebooks/output_{pred_ticker}.ipynb",
+                        "src/notebooks/stock_predictor_papermill.ipynb",
+                        f"src/notebooks/output_{pred_ticker}.ipynb",
                         parameters={"ticker": pred_ticker}
                     )
                     st.success("✅ Model trained successfully.")
 
-                model = load_model(path=model_path)
+                model = load_model(pred_ticker)  # Dynamically load the model
                 df = fetch_data(pred_ticker)
                 df = add_moving_average(df)
                 df = add_bollinger_bands(df)
@@ -103,8 +104,11 @@ def main():
                 fig.update_layout(title=f"{pred_ticker} - Actual vs Predicted")
                 st.plotly_chart(fig, use_container_width=True)
 
+                # Export predictions to a timestamped CSV file
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{pred_ticker}_predictions_{timestamp}.csv"
                 pred_csv = pred_df.reset_index().to_csv(index=False).encode("utf-8")
-                st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=f"{pred_ticker}_predictions.csv", mime="text/csv")
+                st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=filename, mime="text/csv")
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
 
