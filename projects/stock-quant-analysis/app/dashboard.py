@@ -14,9 +14,19 @@ def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
 
     st.title("📊 Stock Quantitative Analysis")
-    tickers_input = st.text_input("Enter stock tickers (comma-separated):", "AAPL, MSFT")
+    st.markdown("💡 Tip: For best viewing, switch to wide layout or dark mode in settings (⚙️ top-right)")
 
-    tab1, tab2 = st.tabs(["📈 Analysis", "🤖 ML Predictions"])  # Modified layout
+    tickers_input = st.text_input(
+        "Enter stock tickers",
+        placeholder="e.g. AAPL, TSLA, MSFT",
+        help="Separate multiple tickers with commas (no spaces)"
+    )
+
+    tab1, tab2, tab3 = st.tabs([
+        "📈 Technical Analysis",
+        "🤖 ML Predictions",
+        "📋 Summary & Export"
+    ])
 
     with tab1:
         if st.button("Run Analysis"):
@@ -34,13 +44,11 @@ def main():
                     df = add_macd(df)
                     df = add_ema_crossover(df)
 
-                    # Show interactive charts
-                    st.pyplot(plot_price(df, ticker))  # Plot inline
+                    st.pyplot(plot_price(df, ticker))
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
                         plot_candlestick(df, ticker, filename=tmpfile.name)
                         st.image(tmpfile.name, caption=f"{ticker} Candlestick Chart")
 
-                    # Collect summary
                     summary = get_summary_metrics(df)
                     summary["Ticker"] = ticker
                     summaries.append(summary)
@@ -49,15 +57,17 @@ def main():
 
             if summaries:
                 summary_df = pd.DataFrame(summaries)
+                st.session_state["summary_df"] = summary_df  # store in session for reuse
                 st.subheader("📋 Summary Table")
                 st.dataframe(summary_df)
 
-                csv = summary_df.to_csv(index=False).encode('utf-8')
-                st.download_button("Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
-
-    with tab2:  # Added new tab for predictions
+    with tab2:
         st.subheader("📉 Predict Next-Day Close")
-        pred_ticker = st.text_input("Enter a single stock ticker:", "AAPL")
+        pred_ticker = st.text_input(
+            "Enter stock ticker for prediction",
+            placeholder="e.g. AAPL",
+            help="Only one ticker at a time"
+        )
 
         if st.button("Predict"):
             try:
@@ -70,14 +80,31 @@ def main():
                 df = add_ema_crossover(df)
                 df.dropna(inplace=True)
 
-                features = prepare_features(df)
-                latest_features = features.iloc[-1:]
-                predicted_price = model.predict(latest_features)[0]
+                X = prepare_features(df)
+                X_test = X.iloc[-30:]
+                preds = model.predict(X_test)
 
-                st.metric(label="Predicted Next Close", value=f"${predicted_price:.2f}")
-                st.line_chart(df[["Close"]].tail(30))  # show recent trend
+                st.metric(label="📊 Predicted Next Close", value=f"${preds[-1]:.2f}", delta="vs last close")
+
+                pred_df = df[["Close"]].iloc[-30:].copy()
+                pred_df["Predicted"] = preds
+                st.subheader("📊 Actual vs Predicted")
+                st.line_chart(pred_df)
+
+                pred_csv = pred_df.reset_index().to_csv(index=False).encode("utf-8")
+                st.download_button("\ud83d\udcc5 Download Predictions CSV", data=pred_csv, file_name=f"{pred_ticker}_predictions.csv", mime="text/csv")
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
+
+    with tab3:
+        if "summary_df" in st.session_state:
+            st.subheader("\ud83d\udccb Export Summary")
+            st.dataframe(st.session_state["summary_df"])
+
+            csv = st.session_state["summary_df"].to_csv(index=False).encode('utf-8')
+            st.download_button("\ud83d\udcc5 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
+        else:
+            st.info("Run analysis first to see summary table here.")
 
 if __name__ == "__main__":
     main()
