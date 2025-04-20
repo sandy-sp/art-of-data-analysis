@@ -10,6 +10,7 @@ from src.model.predictor import load_model, prepare_features
 import os
 import papermill as pm
 from datetime import datetime
+from plotly.graph_objs import Scatter, Figure
 
 def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
@@ -55,22 +56,17 @@ def main():
                     candle_fig = plot_candlestick(df, ticker)
                     st.plotly_chart(candle_fig, use_container_width=True)
 
-                    # Collect summary metrics
                     metrics = get_summary_metrics(df)
                     summary_data.append({"Ticker": ticker, **metrics})
                 except Exception as e:
                     st.error(f"Failed to process {ticker}: {e}")
 
-            # Display summary table
             if summary_data:
                 st.subheader("📋 Summary Table")
                 summary_df = pd.DataFrame(summary_data)
                 st.dataframe(summary_df)
 
-                # Save summary to session state for export
                 st.session_state["summary_df"] = summary_df
-
-                # Export summary as CSV
                 csv = summary_df.to_csv(index=False).encode('utf-8')
                 st.download_button("📅 Download CSV Summary", data=csv, file_name="stock_summary.csv", mime="text/csv")
 
@@ -84,17 +80,18 @@ def main():
 
         if st.button("Predict"):
             try:
-                model_path = f"src/model/trained_model_{pred_ticker}.pkl"
+                model_path = f"artifacts/models/trained_model_{pred_ticker}.pkl"
                 if not os.path.exists(model_path):
                     st.info(f"📓 Training model for {pred_ticker}...")
+                    os.makedirs("artifacts/notebooks", exist_ok=True)
                     pm.execute_notebook(
                         "src/notebooks/stock_predictor_papermill.ipynb",
-                        f"src/notebooks/output_{pred_ticker}.ipynb",
+                        f"artifacts/notebooks/output_{pred_ticker}.ipynb",
                         parameters={"ticker": pred_ticker}
                     )
                     st.success("✅ Model trained successfully.")
 
-                model = load_model(pred_ticker)  # Dynamically load the model
+                model = load_model(pred_ticker)
                 df = fetch_data(pred_ticker)
                 df = add_moving_average(df)
                 df = add_bollinger_bands(df)
@@ -113,7 +110,6 @@ def main():
                 pred_df["Predicted"] = preds
                 st.subheader("📊 Actual vs Predicted")
 
-                from plotly.graph_objs import Scatter, Figure
                 fig = Figure(data=[
                     Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
                     Scatter(x=pred_df.index, y=pred_df['Predicted'], name='Predicted')
@@ -121,11 +117,11 @@ def main():
                 fig.update_layout(title=f"{pred_ticker} - Actual vs Predicted")
                 st.plotly_chart(fig, use_container_width=True)
 
-                # Export predictions to a timestamped CSV file
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"{pred_ticker}_predictions_{timestamp}.csv"
                 pred_csv = pred_df.reset_index().to_csv(index=False).encode("utf-8")
                 st.download_button("📅 Download Predictions CSV", data=pred_csv, file_name=filename, mime="text/csv")
+
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
 
