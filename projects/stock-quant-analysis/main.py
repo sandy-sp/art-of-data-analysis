@@ -5,9 +5,9 @@ from src.analysis import (
 )
 from src.visualization import plot_price, plot_candlestick
 import pandas as pd
+import os
 
-def run():
-    ticker = "AAPL"
+def process_ticker(ticker):
     df = fetch_data(ticker)
     df = add_moving_average(df)
     df = daily_returns(df)
@@ -16,17 +16,37 @@ def run():
     df = add_macd(df)
     df = add_ema_crossover(df)
 
-    # Plot + Save
+    os.makedirs("reports/figures", exist_ok=True)
+
+    # Save plots
     plot_price(df, ticker)
     plot_candlestick(df, ticker, filename=f"reports/figures/{ticker}_candlestick.png")
 
-    # Summary to CSV
-    summary = get_summary_metrics(df)
-    summary_df = pd.DataFrame([summary])
-    summary_df.to_csv(f"reports/{ticker}_summary.csv", index=False)
+    return get_summary_metrics(df)
 
-    print(f"✅ Report exported for {ticker}")
+def run():
+    user_input = input("📥 Enter one or more stock tickers (comma-separated): ")
+    tickers = [t.strip().upper() for t in user_input.split(",") if t.strip()]
 
+    if not tickers:
+        print("⚠️ No tickers provided. Exiting.")
+        return
+
+    all_summaries = []
+    for ticker in tickers:
+        try:
+            print(f"🔍 Processing {ticker}...")
+            summary = process_ticker(ticker)
+            summary["Ticker"] = ticker
+            all_summaries.append(summary)
+        except Exception as e:
+            print(f"❌ Failed to process {ticker}: {e}")
+
+    if all_summaries:
+        summary_df = pd.DataFrame(all_summaries)
+        os.makedirs("reports", exist_ok=True)
+        summary_df.to_csv("reports/stock_summary.csv", index=False)
+        print("✅ Summary CSV saved to: reports/stock_summary.csv")
 
 if __name__ == "__main__":
     run()
