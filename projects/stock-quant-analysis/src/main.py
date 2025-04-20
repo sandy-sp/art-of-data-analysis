@@ -13,7 +13,7 @@ from plotly.graph_objs import Scatter, Figure
 
 
 def process_ticker(ticker):
-    # Train model for ticker
+    # Train model if needed
     subprocess.run(["python", "src/train/train_model.py", ticker], check=True)
 
     # Prepare data
@@ -26,17 +26,18 @@ def process_ticker(ticker):
     df = add_ema_crossover(df)
     df.dropna(inplace=True)
 
-    # Output folder with timestamp
+    # Output path
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = f"generated_reports/{ticker}_{timestamp}"
+    output_dir = f"artifacts/reports/{ticker}_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Save charts
+    # Charts
     fig_price = plot_price(df, ticker)
     fig_price.write_image(f"{output_dir}/price.png")
 
     plot_candlestick(df, ticker, filename=f"{output_dir}/candlestick.png")
 
+    # Predictions
     model = load_model(ticker)
     X = prepare_features(df)
     preds = model.predict(X[-30:])
@@ -51,12 +52,12 @@ def process_ticker(ticker):
     fig_pred.update_layout(title=f"{ticker} - Actual vs Predicted")
     fig_pred.write_image(f"{output_dir}/actual_vs_predicted.png")
 
-    # Save summary CSV
+    # Save summary
     summary = get_summary_metrics(df)
     summary["Ticker"] = ticker
     pd.DataFrame([summary]).to_csv(f"{output_dir}/summary.csv", index=False)
 
-    print(f"✅ Output saved to {output_dir}")
+    print(f"✅ Reports saved to {output_dir}")
 
 
 def run():
