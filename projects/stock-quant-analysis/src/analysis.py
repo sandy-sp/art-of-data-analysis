@@ -34,3 +34,17 @@ def add_ema_crossover(df, short_window=9, long_window=21):
     df[f'EMA_{long_window}'] = df['Close'].ewm(span=long_window, adjust=False).mean()
     return df
 
+def get_summary_metrics(df):
+    latest = df.iloc[-1]
+    summary = {
+        "Close": latest["Close"],
+        "20-day MA": latest.get("MA_20", None),
+        "BB Upper": latest.get("BB_Upper", None),
+        "BB Lower": latest.get("BB_Lower", None),
+        "RSI": latest.get("RSI", None),
+        "MACD": latest.get("MACD", None),
+        "MACD Signal": latest.get("MACD_Signal", None),
+        "EMA 9": latest.get("EMA_9", None),
+        "EMA 21": latest.get("EMA_21", None)
+    }
+    return summary
