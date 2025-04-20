@@ -6,9 +6,9 @@ from src.features.indicators import (
     add_rsi, add_macd, add_ema_crossover, get_summary_metrics
 )
 from src.viz.charts import plot_price, plot_candlestick
-import os
-import tempfile
 from src.model.predictor import load_model, prepare_features
+import os
+import papermill as pm
 
 def main():
     st.set_page_config(page_title="Stock Quant Dashboard", layout="wide")
@@ -66,20 +66,15 @@ def main():
 
         if st.button("Predict"):
             try:
-                import os
-                import shutil
-                from nbclient import NotebookClient
-                from nbformat import read
-
                 model_path = f"src/model/trained_model_{pred_ticker}.pkl"
                 if not os.path.exists(model_path):
-                    with open("notebooks/stock_predictor.ipynb") as f:
-                        nb = read(f, as_version=4)
-                        client = NotebookClient(nb)
-                        client.execute()
-
-                    # Rename the output model file to be ticker-specific
-                    shutil.move("src/model/trained_model.pkl", model_path)
+                    st.info(f"📓 Training model for {pred_ticker}...")
+                    pm.execute_notebook(
+                        "notebooks/stock_predictor_papermill.ipynb",
+                        f"notebooks/output_{pred_ticker}.ipynb",
+                        parameters={"ticker": pred_ticker}
+                    )
+                    st.success("✅ Model trained successfully.")
 
                 model = load_model(path=model_path)
                 df = fetch_data(pred_ticker)
@@ -100,8 +95,7 @@ def main():
                 pred_df["Predicted"] = preds
                 st.subheader("📊 Actual vs Predicted")
 
-                # Plot with Plotly
-                from plotly.graph_objs import Scatter, Layout, Figure
+                from plotly.graph_objs import Scatter, Figure
                 fig = Figure(data=[
                     Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
                     Scatter(x=pred_df.index, y=pred_df['Predicted'], name='Predicted')
