@@ -9,3 +9,4 @@ jupyterlab
 mplfinance
 streamlit
 joblib
+plotly
