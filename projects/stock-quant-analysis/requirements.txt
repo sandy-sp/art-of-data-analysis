@@ -7,3 +7,4 @@ scipy
 statsmodels
 jupyterlab
 mplfinance
+streamlit
