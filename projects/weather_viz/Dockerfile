@@ -1,4 +1,4 @@
-# Base image with Python and Streamlit
+# Dockerfile for weather_viz project
 FROM python:3.9-slim
 
 # Set environment variables
