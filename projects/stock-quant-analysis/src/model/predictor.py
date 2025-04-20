@@ -1,6 +1,7 @@
 import joblib
 
-def load_model(path="src/model/trained_model.pkl"):
+def load_model(ticker, base_path="src/model"):
+    path = f"{base_path}/trained_model_{ticker}.pkl"
     return joblib.load(path)
 
 def prepare_features(df):
