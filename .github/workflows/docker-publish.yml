@@ -1,0 +1,53 @@
+name: CI - Build & Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: earthquake-viz
+            path: projects/earthquake_viz
+          - name: weather-quake-dashboard
+            path: projects/weather-quake-dashboard
+          - name: weather-viz
+            path: projects/weather_viz
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        run: |
+          TAG=${GITHUB_SHA::7}
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:$TAG ${{ matrix.path }}
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:$TAG ghcr.io/${{ github.actor }}/${{ matrix.name }}:$TAG
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:$TAG
+          docker push ghcr.io/${{ github.actor }}/${{ matrix.name }}:$TAG
+
+      - name: Optionally push latest
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:$TAG ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:latest
+          docker tag ghcr.io/${{ github.actor }}/${{ matrix.name }}:$TAG ghcr.io/${{ github.actor }}/${{ matrix.name }}:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.name }}:latest
+          docker push ghcr.io/${{ github.actor }}/${{ matrix.name }}:latest
