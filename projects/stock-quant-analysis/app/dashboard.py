@@ -38,8 +38,6 @@ def main():
     with tab1:
         if st.button("Run Analysis"):
             tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
-            summaries = []
-
             for ticker in tickers:
                 try:
                     st.subheader(f"📈 {ticker} Analysis")
@@ -56,18 +54,8 @@ def main():
 
                     candle_fig = plot_candlestick(df, ticker)
                     st.plotly_chart(candle_fig, use_container_width=True)
-
-                    summary = get_summary_metrics(df)
-                    summary["Ticker"] = ticker
-                    summaries.append(summary)
                 except Exception as e:
                     st.error(f"Failed to process {ticker}: {e}")
-
-            if summaries:
-                summary_df = pd.DataFrame(summaries)
-                st.session_state["summary_df"] = summary_df  # store in session for reuse
-                st.subheader("📋 Summary Table")
-                st.dataframe(summary_df)
 
     with tab2:
         st.subheader("📉 Predict Next-Day Close")
