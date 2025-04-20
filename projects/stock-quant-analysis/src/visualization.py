@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import mplfinance as mpf
 
 def plot_price(df, ticker):
     import matplotlib.pyplot as plt
@@ -38,3 +39,18 @@ def plot_price(df, ticker):
 
     plt.tight_layout()
     plt.show()
+
+def plot_candlestick(df, ticker, filename=None):
+    df_candle = df.copy()
+    df_candle.index.name = 'Date'
+    df_candle = df_candle[['Open', 'High', 'Low', 'Close', 'Volume']]
+
+    mpf.plot(
+        df_candle,
+        type='candle',
+        mav=(9, 21),
+        volume=True,
+        title=f'{ticker} Candlestick Chart',
+        style='yahoo',
+        savefig=filename if filename else None
+    )
