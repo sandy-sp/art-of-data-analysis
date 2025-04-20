@@ -22,8 +22,6 @@ def main():
         help="Separate multiple tickers with commas (no spaces)"
     )
 
-    
-
     tab1, tab2, tab3 = st.tabs([
         "📈 Technical Analysis",
         "🤖 ML Predictions",
@@ -60,15 +58,30 @@ def main():
 
     with tab2:
         st.subheader("📉 Predict Next-Day Close")
-        pred_ticker = st.text_input(
-            "Enter stock ticker for prediction",
-            placeholder="e.g. AAPL",
-            help="Only one ticker at a time"
-        )
+        if not tickers_input.strip():
+            st.warning("Please enter a ticker symbol above first.")
+            return
+
+        pred_ticker = tickers_input.strip().split(",")[0].upper()
 
         if st.button("Predict"):
             try:
-                model = load_model()
+                import os
+                import shutil
+                from nbclient import NotebookClient
+                from nbformat import read
+
+                model_path = f"src/model/trained_model_{pred_ticker}.pkl"
+                if not os.path.exists(model_path):
+                    with open("notebooks/stock_predictor.ipynb") as f:
+                        nb = read(f, as_version=4)
+                        client = NotebookClient(nb)
+                        client.execute()
+
+                    # Rename the output model file to be ticker-specific
+                    shutil.move("src/model/trained_model.pkl", model_path)
+
+                model = load_model(path=model_path)
                 df = fetch_data(pred_ticker)
                 df = add_moving_average(df)
                 df = add_bollinger_bands(df)
