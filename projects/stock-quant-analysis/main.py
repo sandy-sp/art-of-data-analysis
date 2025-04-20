@@ -1,9 +1,9 @@
-from src.data_retrieval import fetch_data
-from src.analysis import (
-    add_moving_average, daily_returns, add_bollinger_bands, add_rsi,
-    add_macd, add_ema_crossover, get_summary_metrics
+from src.data.fetcher import fetch_data
+from src.features.indicators import (
+    add_moving_average, daily_returns, add_bollinger_bands,
+    add_rsi, add_macd, add_ema_crossover, get_summary_metrics
 )
-from src.visualization import plot_price, plot_candlestick
+from src.viz.charts import plot_price, plot_candlestick
 import pandas as pd
 import os
 
