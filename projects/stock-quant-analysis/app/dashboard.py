@@ -22,6 +22,13 @@ def main():
         help="Separate multiple tickers with commas (no spaces)"
     )
 
+    time_range = st.selectbox(
+        "Select time range for analysis",
+        options=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"],
+        index=3,
+        help="Defines how much historical data is pulled"
+    )
+
     tab1, tab2, tab3 = st.tabs([
         "📈 Technical Analysis",
         "🤖 ML Predictions",
@@ -36,7 +43,7 @@ def main():
             for ticker in tickers:
                 try:
                     st.subheader(f"📈 {ticker} Analysis")
-                    df = fetch_data(ticker)
+                    df = fetch_data(ticker, period=time_range)
                     df = add_moving_average(df)
                     df = daily_returns(df)
                     df = add_bollinger_bands(df)
