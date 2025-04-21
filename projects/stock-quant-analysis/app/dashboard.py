@@ -104,8 +104,8 @@ def main():
             try:
                 import time
 
-                model_dir = f"artifacts/models/transformer_{pred_ticker}"
-                if not os.path.exists(model_dir):
+                model_path = f"artifacts/models/transformer_{pred_ticker}.pt"
+                if not os.path.exists(model_path):
                     st.info(f"📓 Training model for {pred_ticker}...")
 
                     os.makedirs("artifacts/notebooks", exist_ok=True)
@@ -119,11 +119,11 @@ def main():
                     timeout = 300  # seconds
                     poll_interval = 5
                     waited = 0
-                    while not os.path.exists(model_dir) and waited < timeout:
+                    while not os.path.exists(model_path) and waited < timeout:
                         time.sleep(poll_interval)
                         waited += poll_interval
 
-                    if not os.path.exists(model_dir):
+                    if not os.path.exists(model_path):
                         st.error(f"❌ Model training for {pred_ticker} timed out.")
                         return
 
@@ -144,8 +144,8 @@ def main():
                 forecast_actual = scaler.inverse_transform(forecast)
                 actual = series[-30:]
 
-                pred_df = actual.pd_dataframe().copy()
-                pred_df["Predicted"] = forecast_actual.pd_series()
+                pred_df = actual.pd_dataframe().copy() 
+                pred_df["Predicted"] = forecast_actual.pd_series()  
 
                 st.metric(label="📊 Predicted Next Close", value=f"${forecast_actual[-1].values[0]:.2f}", delta="vs last close")
 
