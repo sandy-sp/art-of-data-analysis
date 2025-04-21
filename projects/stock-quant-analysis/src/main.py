@@ -38,12 +38,16 @@ def process_ticker(ticker):
     plot_candlestick(df, ticker, filename=f"{output_dir}/candlestick.png")
 
     # Predictions
-    model = load_model(ticker)
-    X = prepare_features(df)
-    preds = model.predict(X[-30:])
+    model, scaler = load_model(ticker)
+    series = prepare_series(df)
+    series_scaled = scaler.transform(series)
 
-    pred_df = df[["Close"]].iloc[-30:].copy()
-    pred_df["Predicted"] = preds
+    forecast = model.predict(n=30)
+    forecast_actual = scaler.inverse_transform(forecast)
+    actual = series[-30:]
+
+    pred_df = actual.pd_dataframe().copy()
+    pred_df["Predicted"] = forecast_actual.pd_series()
 
     fig_pred = Figure(data=[
         Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
