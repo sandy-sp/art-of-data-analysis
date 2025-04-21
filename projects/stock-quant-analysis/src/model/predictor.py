@@ -1,14 +1,14 @@
+from darts.models import TransformerModel
+from darts import TimeSeries
+from darts.dataprocessing.transformers import Scaler
 import os
-import joblib
 
-def load_model(ticker, base_dir="artifacts/models"):
-    path = os.path.join(base_dir, f"trained_model_{ticker}.pkl")
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Model file not found at: {path}")
-    return joblib.load(path)
+def load_model(ticker):
+    model_path = f"artifacts/models/transformer_{ticker}"
+    scaler_path = f"artifacts/models/scaler_{ticker}.pkl"
+    model = TransformerModel.load(model_path)
+    scaler = Scaler.load(scaler_path)
+    return model, scaler
 
-def prepare_features(df):
-    return df[[
-        "MA_20", "BB_Upper", "BB_Lower", "RSI",
-        "MACD", "MACD_Signal", "EMA_9", "EMA_21"
-    ]]
+def prepare_series(df):
+    return TimeSeries.from_dataframe(df.reset_index(), time_col="Date", value_cols="Close")
