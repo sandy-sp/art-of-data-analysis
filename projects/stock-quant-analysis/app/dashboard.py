@@ -1,3 +1,12 @@
+import sys
+import types
+
+# Workaround to avoid torch.classes error
+class FakeModule(types.ModuleType):
+    __path__ = []  # Prevents Streamlit's watcher from scanning it
+
+sys.modules['torch.classes'] = FakeModule('torch.classes')
+
 import streamlit as st
 import pandas as pd
 from src.data.fetcher import fetch_data
@@ -6,7 +15,7 @@ from src.features.indicators import (
     add_rsi, add_macd, add_ema_crossover, get_summary_metrics
 )
 from src.viz.charts import plot_price, plot_candlestick
-from src.model.predictor import load_model, prepare_features
+from src.model.predictor import load_model, prepare_series
 import os
 import shutil
 import papermill as pm
@@ -93,36 +102,54 @@ def main():
 
         if st.button("Predict"):
             try:
-                model_path = f"artifacts/models/trained_model_{pred_ticker}.pkl"
-                if not os.path.exists(model_path):
+                import time
+
+                model_dir = f"artifacts/models/transformer_{pred_ticker}"
+                if not os.path.exists(model_dir):
                     st.info(f"📓 Training model for {pred_ticker}...")
+
                     os.makedirs("artifacts/notebooks", exist_ok=True)
                     pm.execute_notebook(
                         "src/notebooks/stock_predictor_papermill.ipynb",
                         f"artifacts/notebooks/output_{pred_ticker}.ipynb",
                         parameters={"ticker": pred_ticker}
                     )
-                    st.success("✅ Model trained successfully.")
 
-                model = load_model(pred_ticker)
+                    # Wait until model folder is available
+                    timeout = 300  # seconds
+                    poll_interval = 5
+                    waited = 0
+                    while not os.path.exists(model_dir) and waited < timeout:
+                        time.sleep(poll_interval)
+                        waited += poll_interval
+
+                    if not os.path.exists(model_dir):
+                        st.error(f"❌ Model training for {pred_ticker} timed out.")
+                        return
+
+                    st.success("✅ Model trained and ready.")
+
+                model, scaler = load_model(pred_ticker)
                 df = fetch_data(pred_ticker)
-                df = add_moving_average(df)
-                df = add_bollinger_bands(df)
-                df = add_rsi(df)
-                df = add_macd(df)
-                df = add_ema_crossover(df)
+                df = df.reset_index()
+                df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+                df = df.dropna(subset=["Date"])
+                df["Date"] = df["Date"].dt.tz_localize(None)
 
-                df.dropna(inplace=True)
-                X = prepare_features(df)
-                X_test = X.iloc[-30:]
-                preds = model.predict(X_test)
+                from darts import TimeSeries
+                series = TimeSeries.from_dataframe(df, time_col="Date", value_cols="Close", fill_missing_dates=True, freq="D")
+                series_scaled = scaler.transform(series)
 
-                st.metric(label="📊 Predicted Next Close", value=f"${preds[-1]:.2f}", delta="vs last close")
+                forecast = model.predict(n=30)
+                forecast_actual = scaler.inverse_transform(forecast)
+                actual = series[-30:]
 
-                pred_df = df[["Close"]].iloc[-30:].copy()
-                pred_df["Predicted"] = preds
+                pred_df = actual.pd_dataframe().copy()
+                pred_df["Predicted"] = forecast_actual.pd_series()
+
+                st.metric(label="📊 Predicted Next Close", value=f"${forecast_actual[-1].values[0]:.2f}", delta="vs last close")
+
                 st.subheader("📊 Actual vs Predicted")
-
                 fig = Figure(data=[
                     Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
                     Scatter(x=pred_df.index, y=pred_df['Predicted'], name='Predicted')
