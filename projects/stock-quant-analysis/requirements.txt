@@ -24,3 +24,9 @@ jupyterlab
 
 # System & Utilities
 python-dotenv  # optional, for future config/env
+
+# Machine Learning Libraries
+transformers
+pytorch-lightning
+torch
+darts
