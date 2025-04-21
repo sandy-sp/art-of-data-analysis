@@ -7,7 +7,7 @@ from src.features.indicators import (
     add_moving_average, daily_returns, add_bollinger_bands,
     add_rsi, add_macd, add_ema_crossover, get_summary_metrics
 )
-from src.model.predictor import load_model, prepare_features
+from src.model.predictor import load_model, prepare_series
 from src.viz.charts import plot_price, plot_candlestick
 from plotly.graph_objs import Scatter, Figure
 
@@ -46,8 +46,8 @@ def process_ticker(ticker):
     forecast_actual = scaler.inverse_transform(forecast)
     actual = series[-30:]
 
-    pred_df = actual.pd_dataframe().copy()
-    pred_df["Predicted"] = forecast_actual.pd_series()
+    pred_df = actual.pd_dataframe().copy(deep=True) if hasattr(actual, "pd_dataframe") else actual.to_dataframe().copy(deep=True)
+    pred_df["Predicted"] = forecast_actual.values().squeeze()
 
     fig_pred = Figure(data=[
         Scatter(x=pred_df.index, y=pred_df['Close'], name='Actual'),
