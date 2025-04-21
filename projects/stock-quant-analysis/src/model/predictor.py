@@ -4,7 +4,7 @@ from darts.dataprocessing.transformers import Scaler
 import os
 
 def load_model(ticker):
-    model_path = f"artifacts/models/transformer_{ticker}"
+    model_path = f"artifacts/models/transformer_{ticker}.pt"
     scaler_path = f"artifacts/models/scaler_{ticker}.pkl"
     model = TransformerModel.load(model_path)
     scaler = Scaler.load(scaler_path)
