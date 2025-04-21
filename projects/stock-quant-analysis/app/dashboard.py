@@ -144,10 +144,10 @@ def main():
                 forecast_actual = scaler.inverse_transform(forecast)
                 actual = series[-30:]
 
-                pred_df = actual.pd_dataframe().copy() 
-                pred_df["Predicted"] = forecast_actual.pd_series()  
+                pred_df = actual.pd_dataframe().copy(deep=True) if hasattr(actual, "pd_dataframe") else actual.to_dataframe().copy(deep=True)
+                pred_df["Predicted"] = forecast_actual.values().squeeze()
 
-                st.metric(label="📊 Predicted Next Close", value=f"${forecast_actual[-1].values[0]:.2f}", delta="vs last close")
+                st.metric(label="📊 Predicted Next Close", value=f"${forecast_actual.values()[-1][0]:.2f}", delta="vs last close")
 
                 st.subheader("📊 Actual vs Predicted")
                 fig = Figure(data=[
