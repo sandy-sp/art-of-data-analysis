@@ -27,20 +27,30 @@ Whether it's identifying patterns, making predictions, or building interactive d
 
 ## Projects Included
 
-### 1. ✨ Weather Forecast Visualizer ([Live App](https://art-of-data-analysis-weather-viz.streamlit.app/))
-An interactive **Streamlit** dashboard that fetches and visualizes hourly/daily weather forecasts using the [Open-Meteo API](https://open-meteo.com/). Features include:
+### 1. 🌋 Weather & Earthquake Insight Dashboard ([Live App](https://art-of-data-analysis-weather-quake.streamlit.app/))
+An interactive **Streamlit** dashboard combining **Open-Meteo**, **USGS**, and **tectonic plate data** to visualize weather and seismic activity over time and space.
 
-- Forecast by ZIP code (U.S.) with location validation
-- Interactive Plotly charts for temperature, humidity, wind & precipitation
-- Combined temperature & humidity analysis
-- CSV/Excel export of forecast data
+Key features:
 
-**Stack**: Streamlit, Plotly, Pandas, Requests, Openpyxl, Pgeocode
+- Select region by U.S. **ZIP code or city/state**
+- Integrated APIs:
+  - Open-Meteo for historical weather (temperature, humidity, precipitation)
+  - USGS Earthquake API for seismic event data
+- Interactive visualizations:
+  - Time series of weather vs. quake activity
+  - Scatterplot correlation between magnitude and weather
+  - 3D earthquake depth with rotation + zoom
+  - Folium map with clustered quakes, tectonic overlays, tooltips
+- Download filtered **GeoJSON**, **CSV**, or **Excel**
+
+**Stack**: Python 3.10+, Streamlit, Plotly, Folium, GeoPandas, Open-Meteo, USGS API, Geopy
 
 **Run Locally**:
 ```bash
-git clone https://github.com/sandy-sp/art_of_data_analysis_projects_weather_viz.git
-cd art_of_data_analysis_projects_weather_viz/projects/weather_viz
+git clone https://github.com/sandy-sp/art-of-data-analysis.git
+cd projects/weather-quake-dashboard
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
@@ -76,30 +86,20 @@ streamlit run app/main.py
 
 ---
 
-### 3. 🌋 Weather & Earthquake Insight Dashboard ([Live App](https://art-of-data-analysis-weather-quake.streamlit.app/))
-An interactive **Streamlit** dashboard combining **Open-Meteo**, **USGS**, and **tectonic plate data** to visualize weather and seismic activity over time and space.
+### 3. ✨ Weather Forecast Visualizer ([Live App](https://art-of-data-analysis-weather-viz.streamlit.app/))
+An interactive **Streamlit** dashboard that fetches and visualizes hourly/daily weather forecasts using the [Open-Meteo API](https://open-meteo.com/). Features include:
 
-Key features:
+- Forecast by ZIP code (U.S.) with location validation
+- Interactive Plotly charts for temperature, humidity, wind & precipitation
+- Combined temperature & humidity analysis
+- CSV/Excel export of forecast data
 
-- Select region by U.S. **ZIP code or city/state**
-- Integrated APIs:
-  - Open-Meteo for historical weather (temperature, humidity, precipitation)
-  - USGS Earthquake API for seismic event data
-- Interactive visualizations:
-  - Time series of weather vs. quake activity
-  - Scatterplot correlation between magnitude and weather
-  - 3D earthquake depth with rotation + zoom
-  - Folium map with clustered quakes, tectonic overlays, tooltips
-- Download filtered **GeoJSON**, **CSV**, or **Excel**
-
-**Stack**: Python 3.10+, Streamlit, Plotly, Folium, GeoPandas, Open-Meteo, USGS API, Geopy
+**Stack**: Streamlit, Plotly, Pandas, Requests, Openpyxl, Pgeocode
 
 **Run Locally**:
 ```bash
-git clone https://github.com/sandy-sp/art-of-data-analysis.git
-cd projects/weather-quake-dashboard
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+git clone https://github.com/sandy-sp/art_of_data_analysis_projects_weather_viz.git
+cd art_of_data_analysis_projects_weather_viz/projects/weather_viz
 pip install -r requirements.txt
 streamlit run app.py
 ```
